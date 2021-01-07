@@ -77,7 +77,9 @@ class dj_plotter():
                               Total number of plots to show
             save_path       : string or Pathlib path
                               If given, will auto-export the figure under this path
-
+            save_format     : string
+                              'pdf', 'png', ...
+                              Default: 'pdf'
 
         '''
         
@@ -97,6 +99,9 @@ class dj_plotter():
         if self.save_path is not None: 
             if isinstance(self.save_path, str):
                 self.save_path = pathlib.Path(self.save_path)
+
+        self.save_format = kwargs.get('save_format', 'pdf')
+        assert  self.save_format in ['pdf','png','jpg'], f'Format "{self.save_format}" not recognized'
                    
     def __repr__(self):
         return f'DJ plotter class\nAvailable attributes:\n{self.__attributes}'
@@ -167,14 +172,15 @@ class dj_plotter():
 
         if show_cell:
             if display_score is not None:
-                title = r'$\bfC {}$ {} | {:.2f}'.format(entry['cell_id'], hash_or_animal_string, entry[display_score])
+                title = r'C{} {} | {:.2f}'.format(entry['cell_id'], hash_or_animal_string, entry[display_score])
             else:
-                title = r'$\bfC {}$ {}'.format(entry['cell_id'], hash_or_animal_string)
+                title = r'C{} {}'.format(entry['cell_id'], hash_or_animal_string)
         else:
             title = r'{}'.format(hash_or_animal_string)          
         return title
 
-
+    def __now(self):
+        return datetime.strftime(datetime.now(),'%d.%m.%Y %H-%M-%S-%f')
 
     def __tqdm_iterator(self, iterator, total, desc, leave=False):
         ''' Create a tqdm progress bar ''' 
@@ -249,7 +255,7 @@ class dj_plotter():
         ###########################################################################
         ###############         START PLOTTING FUNCTIONS 
 
-        plot_counter = 1 
+        plot_counter = 0
 
         if self.keys is not None:
             iterator = self.keys
@@ -276,17 +282,17 @@ class dj_plotter():
         
         figure = self.__create_figure_grid
         for no, key in tqdm_iterator:    
-            
+
             if no == total:
-                if self.save_path is not None: 
-                    print('Saving figure under {}'.format(str(self.save_path)))
-                    figure.savefig(self.save_path / f'ratemaps {plot_counter-1}.pdf', bbox_inches='tight')
-                
-                plt.show()
+                if plot_counter > 0:
+                    if self.save_path is not None: 
+                        print('Saving figure under {}'.format(str(self.save_path)))
+                        figure.savefig(self.save_path / f'ratemaps n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
+                    plt.show()
+                    plt.close()
                 # Premature stop? Make sure you close things gracefully:
                 tqdm_iterator.refresh()
                 tqdm._instances.clear()
-                plt.close()
                 break
             
             # Use keys or join object? 
@@ -299,7 +305,7 @@ class dj_plotter():
             ratemap = ratemap.filled(fill_value=0)
             # Get subplot title
             
-            
+            plot_counter += 1
             ax = figure.add_subplot(5,5,plot_counter)
             ax.imshow(ratemap, cmap=cmap, vmin=np.nanmin(ratemap), vmax=np.nanpercentile(ratemap,99))
             ax.set_aspect('equal')
@@ -327,19 +333,17 @@ class dj_plotter():
                 else: 
                     raise NotImplementedError(f'Card position {card_pos} not understood. Choose ["west","east","north","south"]')
 
-            plot_counter += 1       
-
-            
-            if plot_counter > self.plots_per_view:
-
+            if plot_counter >= self.plots_per_view:
                 if self.save_path is not None: 
                     print('Saving figure under {}'.format(str(self.save_path)))
-                    figure.savefig(self.save_path / f'ratemaps {plot_counter-1}.pdf', bbox_inches='tight')
+                    figure.savefig(self.save_path / f'ratemaps n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
                 
-                plot_counter = 1
+                plot_counter = 0
                 plt.show()
                 # Create next figure
                 figure = self.__create_figure_grid
+
+            
 
         return
 
@@ -403,7 +407,7 @@ class dj_plotter():
         ###########################################################################
         ###############         START PLOTTING FUNCTIONS 
 
-        plot_counter = 1 
+        plot_counter = 0
 
         if self.keys is not None:
             iterator = self.keys
@@ -424,15 +428,16 @@ class dj_plotter():
         for no, key in tqdm_iterator:    
             
             if no == total:
-                if self.save_path is not None: 
-                    print('Saving figure under {}'.format(str(self.save_path)))
-                    figure.savefig(self.save_path / f'autocorrs {plot_counter-1}.pdf', bbox_inches='tight')
-                
-                plt.show()
+                if plot_counter > 0:
+                    if self.save_path is not None: 
+                        print('Saving figure under {}'.format(str(self.save_path)))
+                        figure.savefig(self.save_path / f'autocorrs n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')      
+                    plt.show()
+                    plt.close()
+
                 # Premature stop? Make sure you close things gracefully:
                 tqdm_iterator.refresh()
                 tqdm._instances.clear()
-                plt.close()
                 break
             
             # Use keys or join object? 
@@ -440,7 +445,9 @@ class dj_plotter():
                 entry = (self.dj_object & key).fetch1()
             else:
                 entry = key 
-                
+        
+
+            plot_counter += 1 
             ax = figure.add_subplot(5,5,plot_counter)
             ax.imshow(entry['acorr'], cmap=cmap)
             ax.set_aspect('equal')
@@ -453,16 +460,13 @@ class dj_plotter():
             for axis in ['top','bottom','left','right']:
                 ax.spines[axis].set_linewidth(axes_lw)
 
-            plot_counter += 1       
-
             
-            if plot_counter > self.plots_per_view:
-
+            if plot_counter >= self.plots_per_view:
                 if self.save_path is not None: 
                     print('Saving figure under {}'.format(str(self.save_path)))
-                    figure.savefig(self.save_path / f'autocorrs {plot_counter-1}.pdf', bbox_inches='tight')
+                    figure.savefig(self.save_path / f'autocorrs n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
                 
-                plot_counter = 1
+                plot_counter = 0
                 plt.show()
                 # Create next figure
                 figure = self.__create_figure_grid
@@ -539,7 +543,7 @@ class dj_plotter():
         ###########################################################################
         ###############         START PLOTTING FUNCTIONS 
 
-        plot_counter = 1 
+        plot_counter = 0
 
         if self.keys is not None:
             iterator = self.keys
@@ -560,17 +564,18 @@ class dj_plotter():
         for no, key in tqdm_iterator:    
             
             if no == total:
-                plt.tight_layout()
 
-                if self.save_path is not None: 
-                    print('Saving figure under {}'.format(str(self.save_path)))
-                    figure.savefig(self.save_path / f'hdtuning {plot_counter-1}.pdf', bbox_inches='tight')
-                
-                plt.show()
+                if plot_counter > 0:
+                    plt.tight_layout()
+                    if self.save_path is not None: 
+                        print('Saving figure under {}'.format(str(self.save_path)))
+                        figure.savefig(self.save_path / f'hdtuning n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
+                    plt.show()
+                    plt.close()
+
                 # Premature stop? Make sure you close things gracefully:
                 tqdm_iterator.refresh()
                 tqdm._instances.clear()
-                plt.close()
                 break
             
             # Use keys or join object? 
@@ -579,6 +584,7 @@ class dj_plotter():
             else:
                 entry = key 
 
+            plot_counter +=1
             ax = figure.add_subplot(5,5,plot_counter, projection='polar')
 
             # Color? 
@@ -604,15 +610,13 @@ class dj_plotter():
                 title = self.__title(entry, display_score, hash_or_animal)
                 ax.set_title(title, y=1.1)
 
-            plot_counter += 1       
-
-            if plot_counter > self.plots_per_view:
+            if plot_counter >= self.plots_per_view:
                 plt.tight_layout()
                 if self.save_path is not None: 
                     print('Saving figure under {}'.format(str(self.save_path)))
-                    figure.savefig(self.save_path / f'hdtuning {plot_counter-1}.pdf', bbox_inches='tight')
+                    figure.savefig(self.save_path / f'hdtuning n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
                 
-                plot_counter = 1
+                plot_counter = 0
                 plt.show()
                 # Create next figure
                 figure = self.__create_figure_grid
@@ -1010,7 +1014,7 @@ class dj_plotter():
         ###########################################################################
         ###############         START PLOTTING FUNCTIONS 
 
-        plot_counter = 1 
+        plot_counter = 0
 
         if self.keys is not None:
             iterator = self.keys
@@ -1031,16 +1035,17 @@ class dj_plotter():
         for no, key in tqdm_iterator:    
             
             if no == total:
-                if self.save_path is not None: 
-                    print('Saving figure under {}'.format(str(self.save_path)))
-                    figure_export_text = ['spikes' if draw_spikes else ''][0]
-                    figure.savefig(self.save_path / f'tracking {figure_export_text} {plot_counter-1}.pdf', bbox_inches='tight')
-                
-                plt.show()
+                if plot_counter > 0:
+                    if self.save_path is not None: 
+                        print('Saving figure under {}'.format(str(self.save_path)))
+                        figure_export_text = ['spikes' if draw_spikes else ''][0]
+                        figure.savefig(self.save_path / f'tracking {figure_export_text} n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
+                    
+                    plt.show()
+                    plt.close()
                 # Premature stop? Make sure you close things gracefully:
                 tqdm_iterator.refresh()
                 tqdm._instances.clear()
-                plt.close()
                 break
             
             # Use keys or join object? 
@@ -1049,6 +1054,7 @@ class dj_plotter():
             else:
                 entry = key 
                 
+            plot_counter +=1
             ax = figure.add_subplot(5,5,plot_counter)
             if not draw_spikes:  
 
@@ -1091,16 +1097,15 @@ class dj_plotter():
                 title = self.__title(entry, display_score, hash_or_animal, show_cell=draw_spikes)
                 ax.set_title(title)
 
-            sns.despine(left=True, bottom=True)
-            plot_counter += 1       
+            sns.despine(left=True, bottom=True)       
 
-            if plot_counter > self.plots_per_view:
+            if plot_counter >= self.plots_per_view:
                 if self.save_path is not None: 
                     print('Saving figure under {}'.format(str(self.save_path)))
                     figure_export_text = ['spikes' if draw_spikes else ''][0]
-                    figure.savefig(self.save_path / f'tracking {figure_export_text} {plot_counter-1}.pdf', bbox_inches='tight')
+                    figure.savefig(self.save_path / f'tracking {figure_export_text} n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
                 
-                plot_counter = 1
+                plot_counter = 0
                 plt.show()
                 # Create next figure
                 figure = self.__create_figure_grid
@@ -1542,7 +1547,7 @@ class dj_plotter():
 
             if self.save_path is not None: 
                 print('Saving figure under {}'.format(str(self.save_path)))
-                figure.savefig(self.save_path / f'rois {title}.pdf', bbox_inches='tight')
+                figure.savefig(self.save_path / f'rois {title}.{self.save_format}', dpi=300, bbox_inches='tight')
 
             if return_axes:
                 return ax
