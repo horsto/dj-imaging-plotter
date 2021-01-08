@@ -219,7 +219,8 @@ class dj_plotter():
                             Show title? 
             cue_card_pos  : list or string
                             Cue card position in (tracked) field ['north','south','west','east']
-
+            ax            : axis 
+                            Matplotlib axis to draw into 
                         
         ''' 
         # Process kwargs
@@ -230,6 +231,7 @@ class dj_plotter():
         axes_lw        = kwargs.get('axes_lw', 5.)
         display_title  = kwargs.get('display_title', True)
         cue_card_pos   = kwargs.get('cue_card_pos', None)
+        ax             = kwargs.get('ax', None)
 
         # Prepare list of attributes to check:
         ATTR_RATEMAP = self.ATTR_RATEMAP.copy()
@@ -269,6 +271,14 @@ class dj_plotter():
         else:
             total = len(iterator)
         
+        if (ax is not None) and (total > 1):
+            raise NotImplementedError(f'Axis was given, and total number of plots = {total}.\
+                \nMake sure you have only one element to plot!') 
+        elif ax is not None:
+            external_axis = True 
+        elif ax is None:
+            external_axis = False
+
         # Cue card positions 
         if cue_card_pos is not None: 
             if isinstance(cue_card_pos, str):
@@ -280,11 +290,13 @@ class dj_plotter():
         # Make loop with tqdm progress bar
         tqdm_iterator = self.__tqdm_iterator(iterator, total, 'Drawing ratemaps')
         
-        figure = self.__create_figure_grid
+        if not external_axis: 
+            figure = self.__create_figure_grid
+
         for no, key in tqdm_iterator:    
 
             if no == total:
-                if plot_counter > 0:
+                if (plot_counter > 0) and not external_axis:
                     if self.save_path is not None: 
                         print('Saving figure under {}'.format(str(self.save_path)))
                         figure.savefig(self.save_path / f'ratemaps n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
@@ -306,7 +318,9 @@ class dj_plotter():
             # Get subplot title
             
             plot_counter += 1
-            ax = figure.add_subplot(5,5,plot_counter)
+            if not external_axis: 
+                ax = figure.add_subplot(5,5,plot_counter)
+
             ax.imshow(ratemap, cmap=cmap, vmin=np.nanmin(ratemap), vmax=np.nanpercentile(ratemap,99))
             ax.set_aspect('equal')
             ax.get_xaxis().set_ticks([]);ax.get_yaxis().set_ticks([])    
@@ -334,17 +348,17 @@ class dj_plotter():
                     raise NotImplementedError(f'Card position {card_pos} not understood. Choose ["west","east","north","south"]')
 
             if plot_counter >= self.plots_per_view:
-                if self.save_path is not None: 
+                if (self.save_path is not None) and not external_axis: 
                     print('Saving figure under {}'.format(str(self.save_path)))
                     figure.savefig(self.save_path / f'ratemaps n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
                 
                 plot_counter = 0
                 plt.show()
                 # Create next figure
-                figure = self.__create_figure_grid
+                if not external_axis: 
+                    figure = self.__create_figure_grid
 
             
-
         return
 
 
@@ -373,6 +387,8 @@ class dj_plotter():
                             axes linewidth. Default 5.
             display_title : bool 
                             Show title? 
+            ax            : axis 
+                            Matplotlib axis to draw into 
                         
         ''' 
         # Process kwargs
@@ -382,6 +398,7 @@ class dj_plotter():
         hash_or_animal = kwargs.get('hash_or_animal', 'animal')
         axes_lw        = kwargs.get('axes_lw', 5.)
         display_title  = kwargs.get('display_title', True)
+        ax             = kwargs.get('ax', None)
 
         # Prepare list of attributes to check:
         ATTR_AUTOCORR = self.ATTR_AUTOCORR.copy()
@@ -420,15 +437,25 @@ class dj_plotter():
             total = self.total
         else:
             total = len(iterator)
-        
+
+        if (ax is not None) and (total > 1):
+            raise NotImplementedError(f'Axis was given, and total number of plots = {total}.\
+                \nMake sure you have only one element to plot!') 
+        elif ax is not None:
+            external_axis = True 
+        elif ax is None:
+            external_axis = False
+
         # Make loop with tqdm progress bar
         tqdm_iterator = self.__tqdm_iterator(iterator, total, 'Drawing autocorrelations')
-        
-        figure = self.__create_figure_grid
+       
+        if not external_axis: 
+            figure = self.__create_figure_grid
+
         for no, key in tqdm_iterator:    
             
             if no == total:
-                if plot_counter > 0:
+                if (plot_counter > 0) and not external_axis:
                     if self.save_path is not None: 
                         print('Saving figure under {}'.format(str(self.save_path)))
                         figure.savefig(self.save_path / f'autocorrs n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')      
@@ -446,9 +473,9 @@ class dj_plotter():
             else:
                 entry = key 
         
-
             plot_counter += 1 
-            ax = figure.add_subplot(5,5,plot_counter)
+            if not external_axis: 
+                ax = figure.add_subplot(5,5,plot_counter)
             ax.imshow(entry['acorr'], cmap=cmap)
             ax.set_aspect('equal')
             ax.get_xaxis().set_ticks([]);ax.get_yaxis().set_ticks([])    
@@ -462,14 +489,15 @@ class dj_plotter():
 
             
             if plot_counter >= self.plots_per_view:
-                if self.save_path is not None: 
+                if (self.save_path is not None) and not external_axis: 
                     print('Saving figure under {}'.format(str(self.save_path)))
                     figure.savefig(self.save_path / f'autocorrs n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
                 
                 plot_counter = 0
                 plt.show()
                 # Create next figure
-                figure = self.__create_figure_grid
+                if not external_axis: 
+                    figure = self.__create_figure_grid
 
         return
 
@@ -503,7 +531,10 @@ class dj_plotter():
             
             display_title : bool 
                             Show title? 
-                        
+
+            ax            : axis 
+                            Matplotlib axis to draw into 
+    
         ''' 
         # Process kwargs
         display_score  = kwargs.get('display_score', None)
@@ -513,6 +544,7 @@ class dj_plotter():
         only_occupancy = kwargs.get('only_occupancy', False)
         display_title  = kwargs.get('display_title', True)
         line_width     = kwargs.get('line_width', 3.)
+        ax             = kwargs.get('ax', None)
 
         # Prepare list of attributes to check:
         ATTR_HDTUNING = self.ATTR_HDTUNING.copy()
@@ -557,15 +589,24 @@ class dj_plotter():
         else:
             total = len(iterator)
         
+        if (ax is not None) and (total > 1):
+            raise NotImplementedError(f'Axis was given, and total number of plots = {total}.\
+                \nMake sure you have only one element to plot!') 
+        elif ax is not None:
+            external_axis = True 
+        elif ax is None:
+            external_axis = False
+
         # Make loop with tqdm progress bar
         tqdm_iterator = self.__tqdm_iterator(iterator, total, 'Drawing HD tuning')
         
-        figure = self.__create_figure_grid
+        if not external_axis: 
+            figure = self.__create_figure_grid
+
         for no, key in tqdm_iterator:    
             
             if no == total:
-
-                if plot_counter > 0:
+                if (plot_counter > 0) and not external_axis:
                     plt.tight_layout()
                     if self.save_path is not None: 
                         print('Saving figure under {}'.format(str(self.save_path)))
@@ -585,7 +626,10 @@ class dj_plotter():
                 entry = key 
 
             plot_counter +=1
-            ax = figure.add_subplot(5,5,plot_counter, projection='polar')
+            if not external_axis: 
+                ax = figure.add_subplot(5,5,plot_counter, projection='polar')
+            else: 
+                assert 'theta_direction' in ax.properties(), 'Given axis is not polar. Make sure you initialize with "projection=polar"'
 
             # Color? 
             if color_hd:
@@ -614,14 +658,15 @@ class dj_plotter():
 
             if plot_counter >= self.plots_per_view:
                 plt.tight_layout()
-                if self.save_path is not None: 
+                if (self.save_path is not None) and not external_axis: 
                     print('Saving figure under {}'.format(str(self.save_path)))
                     figure.savefig(self.save_path / f'hdtuning n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
                 
                 plot_counter = 0
                 plt.show()
                 # Create next figure
-                figure = self.__create_figure_grid
+                if not external_axis: 
+                    figure = self.__create_figure_grid
 
         return
 
@@ -886,6 +931,8 @@ class dj_plotter():
                             How much smaller than actual speed should dot size be?
             alpha_path    : float
             
+            ax            : axis 
+                            Matplotlib axis to draw into 
                         
         ''' 
         # Process kwargs
@@ -898,12 +945,12 @@ class dj_plotter():
         draw_angle     = kwargs.get('draw_angle', False)
         speed_scaler   = kwargs.get('speed_scaler', .5)
         alpha_path     = kwargs.get('alpha_path', 1)
-
+        ax             = kwargs.get('ax', None)
 
         self.path_spike(draw_spikes=False, cmap=cmap, \
                             display_score=display_score, hash_or_animal=hash_or_animal,
                             draw_speed=draw_speed,  path_dot_size=path_dot_size,
-                            draw_angle=draw_angle, speed_scaler=speed_scaler, alpha_path=alpha_path)
+                            draw_angle=draw_angle, speed_scaler=speed_scaler, alpha_path=alpha_path, ax=ax)
 
         return 
 
@@ -955,12 +1002,13 @@ class dj_plotter():
             alpha_spikes  : float
             display_title : bool 
                             Show title? 
-                        
 
-                        
+            ax            : axis 
+                            Matplotlib axis to draw into 
+                             
         ''' 
         # Process kwargs
-        cmap           = kwargs.get('cmap',  sns.husl_palette(as_cmap=True))
+        cmap           = kwargs.get('cmap', 'inferno')
         display_score  = kwargs.get('display_score', None)
         hash_or_animal = kwargs.get('hash_or_animal', 'animal')
         draw_spikes    = kwargs.get('draw_spikes',True)
@@ -975,6 +1023,7 @@ class dj_plotter():
         alpha_path     = kwargs.get('alpha_path', 1)
         alpha_spikes   = kwargs.get('alpha_spikes', .7)
         display_title  = kwargs.get('display_title', True)
+        ax             = kwargs.get('ax', None)
 
         # Prepare colormap (cmap)
         # for feeding make_circular_colormap or make_linear_colormap below
@@ -1030,14 +1079,24 @@ class dj_plotter():
         else:
             total = len(iterator)
         
+        if (ax is not None) and (total > 1):
+            raise NotImplementedError(f'Axis was given, and total number of plots = {total}.\
+                \nMake sure you have only one element to plot!') 
+        elif ax is not None:
+            external_axis = True 
+        elif ax is None:
+            external_axis = False
+
         # Make loop with tqdm progress bar
         tqdm_iterator = self.__tqdm_iterator(iterator, total, 'Drawing path-spike plots')
         
-        figure = self.__create_figure_grid
+        if not external_axis: 
+            figure = self.__create_figure_grid
+
         for no, key in tqdm_iterator:    
             
             if no == total:
-                if plot_counter > 0:
+                if (plot_counter > 0) and not external_axis:
                     if self.save_path is not None: 
                         print('Saving figure under {}'.format(str(self.save_path)))
                         figure_export_text = ['spikes' if draw_spikes else ''][0]
@@ -1057,7 +1116,8 @@ class dj_plotter():
                 entry = key 
                 
             plot_counter +=1
-            ax = figure.add_subplot(5,5,plot_counter)
+            if not external_axis: 
+                ax = figure.add_subplot(5,5,plot_counter)
             if not draw_spikes:  
 
                 ax.scatter(entry['x_pos'], entry['y_pos'],
@@ -1102,7 +1162,7 @@ class dj_plotter():
             sns.despine(left=True, bottom=True)       
 
             if plot_counter >= self.plots_per_view:
-                if self.save_path is not None: 
+                if (self.save_path is not None) and not external_axis: 
                     print('Saving figure under {}'.format(str(self.save_path)))
                     figure_export_text = ['spikes' if draw_spikes else ''][0]
                     figure.savefig(self.save_path / f'tracking {figure_export_text} n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
@@ -1110,7 +1170,8 @@ class dj_plotter():
                 plot_counter = 0
                 plt.show()
                 # Create next figure
-                figure = self.__create_figure_grid
+                if not external_axis: 
+                    figure = self.__create_figure_grid
 
         return
 
@@ -1319,7 +1380,8 @@ class dj_plotter():
                                  Valid matplotlib colormap string
                                  https://matplotlib.org/3.2.1/tutorials/colors/colormaps.html
                                  or https://github.com/1313e/CMasher
-                invert_img_cmap:
+                invert_img_cmap: bool 
+                                 For image to plot, invert grey scale colormap?
                 hash_or_animal : string
                                  'hash' or 'animal'
                                  Determines whether session name (hash) or animal/timestamp 
@@ -1368,11 +1430,13 @@ class dj_plotter():
                                  This is overridden if return_axes = True
                 display_title  : bool 
                                  Show title? 
+                ax             : axis 
+                                 Matplotlib axis to draw into 
             ''' 
 
             # Process kwargs
             cmap           = kwargs.get('cmap', 'magma')
-            cmap           = plt.get_cmap(cmap)
+            cmap           = plt.get_cmap(cmap).colors
             invert_img_cmap= kwargs.get('invert_img_cmap', False)
             hash_or_animal = kwargs.get('hash_or_animal', 'animal')
             color_mapping  = kwargs.get('color_mapping', None)
@@ -1391,7 +1455,7 @@ class dj_plotter():
             return_axes    = kwargs.get('return_axes',False)
             return_figure  = kwargs.get('return_figure',False)
             display_title  = kwargs.get('display_title', True)
-
+            ax             = kwargs.get('ax', None)
 
             def __iscorr():
                 # Find out if we are dealing with "corr" corrected
@@ -1420,7 +1484,6 @@ class dj_plotter():
                 XLIM = 'x_range_microns_eff'
                 YLIM = 'y_range_microns_eff'
                 LAMBDA = 'lambda_corr'
-                iscorr=True
 
             else:
                 ATTR_ROIS = self.ATTR_ROIS.copy()
@@ -1432,7 +1495,6 @@ class dj_plotter():
                 XLIM = 'x_range'
                 YLIM = 'y_range'
                 LAMBDA = 'lambda'
-                iscorr=False
 
 
             # Display session hash or animal_name/timestamp? 
@@ -1493,9 +1555,15 @@ class dj_plotter():
             pixel_data = pd.DataFrame(self.dj_object.fetch('KEY', *ATTR_ROIS, as_dict=True))
             pixel_data.set_index('cell_id',inplace=True)
             
+            if ax is not None:
+                external_axis = True 
+            elif ax is None:
+                external_axis = False
+
             # Figure
-            figure = self.__create_figure_single
-            ax     = figure.add_subplot(111)
+            if not external_axis:
+                figure = self.__create_figure_single
+                ax     = figure.add_subplot(111)
 
             # Loop over cells and draw 
             for no, key in tqdm_iterator:   
@@ -1547,7 +1615,7 @@ class dj_plotter():
 
             sns.despine(left=True, bottom=True)   
 
-            if self.save_path is not None: 
+            if (self.save_path is not None) and not external_axis: 
                 print('Saving figure under {}'.format(str(self.save_path)))
                 figure.savefig(self.save_path / f'rois {title}.{self.save_format}', dpi=300, bbox_inches='tight')
 
