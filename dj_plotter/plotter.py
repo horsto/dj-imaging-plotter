@@ -930,7 +930,9 @@ class dj_plotter():
             speed_scaler  : float
                             How much smaller than actual speed should dot size be?
             alpha_path    : float
-            
+                            Transparency of lines 
+            display_title : bool 
+                            Show title? 
             ax            : axis 
                             Matplotlib axis to draw into 
                         
@@ -945,12 +947,14 @@ class dj_plotter():
         draw_angle     = kwargs.get('draw_angle', False)
         speed_scaler   = kwargs.get('speed_scaler', .5)
         alpha_path     = kwargs.get('alpha_path', 1)
+        display_title  = kwargs.get('display_title', True)
         ax             = kwargs.get('ax', None)
 
         self.path_spike(draw_spikes=False, cmap=cmap, \
                             display_score=display_score, hash_or_animal=hash_or_animal,
                             draw_speed=draw_speed,  path_dot_size=path_dot_size,
-                            draw_angle=draw_angle, speed_scaler=speed_scaler, alpha_path=alpha_path, ax=ax)
+                            draw_angle=draw_angle, speed_scaler=speed_scaler, alpha_path=alpha_path, 
+                            display_title=display_title, ax=ax)
 
         return 
 
