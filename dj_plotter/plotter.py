@@ -597,8 +597,10 @@ class dj_plotter():
 
             ax.plot(entry['angle_centers'], entry['angular_occupancy']/np.nanmax(entry['angular_occupancy']), \
                                         color='k', alpha=[1. if only_occupancy else .4][0], lw=line_width_)
-            if not only_occupancy:
-                ax.plot(entry['angle_centers'], entry['angular_rate']/np.nanmax(entry['angular_rate']), color=color_line, lw=line_width_, alpha=.85)
+            ax.plot(entry['angle_centers'], entry['angular_rate']/np.nanmax(entry['angular_rate']), color=color_line, lw=line_width_, alpha=.85)
+            if only_occupancy:
+                del ax.lines[1] # Get rid of second drawn line, i.e. the actual tuning curve. This keeps the y axis scaling intact.
+            
             ax.set_aspect('equal')
             ax.set_theta_zero_location("S")
             ax.get_yaxis().set_ticks([])  
