@@ -1453,7 +1453,7 @@ class dj_plotter():
             text_color     = kwargs.get('text_color', 'k')
             fontsize       = kwargs.get('fontsize', 15.)
             dot_color      = kwargs.get('dot_color', 'k')
-            dot_size       = kwargs.get('dot_size', 8)
+            dot_size       = kwargs.get('dot_size', 5)
             alpha          = kwargs.get('alpha', .8)
             colors         = kwargs.get('colors', None)
             return_axes    = kwargs.get('return_axes',False)
@@ -1589,7 +1589,7 @@ class dj_plotter():
                     rgba_colors = np.hstack((rgba_colors, np.zeros((npixels,1))))
                     norm_alpha_px = entry[LAMBDA] / entry[LAMBDA].max()
                     rgba_colors[:, 3] = norm_alpha_px 
-                    ax.scatter(entry[PIXELS_X], entry[PIXELS_Y], s=3, lw=0, color=rgba_colors, marker='o')
+                    ax.scatter(entry[PIXELS_X], entry[PIXELS_Y], s=dot_size, lw=0, color=rgba_colors, marker='o')
 
                 if draw_centers:
                     ax.scatter(entry[CENTER_X],entry[CENTER_Y], s=dot_size, lw=1.5, c=[colors[no] if not draw_pixels else dot_color], alpha=alpha)
