@@ -1,7 +1,7 @@
 ### PLOTTING HELPERS
 import math
 import numpy as np
-from tqdm import tqdm, tqdm_notebook
+from tqdm.auto import tqdm
 from datetime import datetime
 from matplotlib import pyplot as plt
 import matplotlib as mpl
@@ -181,3 +181,75 @@ def make_colorbar(array, no_steps=60, font_scale=1, cmap='hls', **kwargs):
         return figure
     plt.show()
 
+
+def draw_spike_matrix(spikes, tracking=[], offset_scaler=200, save=False, alpha=.002, **kwargs):
+    sns.set(font_scale=1.1)
+    sns.set_style('white',{'axes.facecolor': '1','font.family': ['sans-serif'], 'font.sans-serif': ['Helvetica','Helvetica Neue']})
+    flattening_factor  = [kwargs['flattening'] if 'flattening' in kwargs.keys() else [0.000001]][0]
+    colors =     [kwargs['colors'] if 'colors' in kwargs.keys() else []][0]
+    hline = [kwargs['hline'] if 'hline' in kwargs.keys() else [-1]][0]
+    vline = [kwargs['vline'] if 'vline' in kwargs.keys() else [-1]][0]
+    title = [kwargs['title'] if 'title' in kwargs.keys() else ''][0]
+    save_path = [kwargs['save_path'] if 'save_path' in kwargs.keys() else ''][0]
+    if len(save_path): save=True
+    framerate = [kwargs['framerate'] if 'framerate' in kwargs.keys() else 1][0]
+    time_axis = np.arange(spikes[0].size)/framerate
+    figsize = [kwargs['figsize'] if 'figsize' in kwargs.keys() else (15,6)][0]
+        
+    figure = plt.figure(figsize=figsize)
+    ax1 = plt.subplot2grid((6, 1), (0, 0),  rowspan=5) # spikes
+    ax2 = plt.subplot2grid((6, 1), (5, 0),  rowspan=1) # movement
+    
+    total_cell_no = spikes.shape[0]
+    y_label_pos = []; y_label = []
+
+    for no, spikes_ in enumerate(tqdm(spikes, desc='Drawing spike matrix', leave=False)):     
+        offset = (no * offset_scaler)
+        spike_indices = spikes_ > 0
+        
+        times_spike = time_axis[spike_indices]
+        spikes_ = spikes_[spike_indices] * flattening_factor # flatten
+        ax1.scatter(times_spike, spikes_ + offset, s=3, c=[colors[no] if len(colors) > 0 else 'k'], alpha=alpha, marker='|')
+        y_label_pos.append(offset)
+        y_label.append(no+1)
+        
+    for h in hline:
+        if h >= 0:
+            ax1.axhline(y=h*offset_scaler,color='r',alpha=.8) 
+    for v in vline:
+        if v >= 0:
+            ax1.axvline(x=v,color='r',alpha=.8,ls='--')        
+    
+    xlim = [0,time_axis[-1]]
+    if title: ax1.set_title(title)
+        
+    ax1.set_xlim(xlim)
+    ax1.set_xticklabels([])  
+    
+    ax1.set_ylabel('Cells')
+    
+    slice_step = [1 if int(total_cell_no/3) == 0 else int(total_cell_no/3)][0]
+    ax1.set_yticks(y_label_pos[::slice_step])
+    ax1.set_yticklabels(y_label[::slice_step])
+    sns.despine(bottom=False, left=True)
+    
+    ########### MOVEMENT AXIS ###########
+    if len(tracking)>0:
+        ax2.plot(tracking['timestamps_sys'], tracking['speed'], alpha=.7, c='k',lw=1.8)
+        #ax3 = ax2.twinx()
+        #ax3.plot(tracking['timestamps'], tracking['tracking_smooth'], alpha=.6, c='red',lw=2)
+        #ax3.set_yticks([])  
+        #ax3.set_yticklabels([])  
+        ax2.set_xlabel(['Samples' if framerate == 1 else 'Time [s]'][0])
+        sns.despine(left=True)
+        ax2.set_xlim(xlim)
+        #ax3.set_xlim(xlim)
+        plt.subplots_adjust(hspace=.15)
+    
+    ########### SAVE ###########
+    if save and len(save_path) > 0:
+        plt.savefig('{}'.format(save_path), dpi=300, facecolor='w', edgecolor='w',
+            orientation='portrait', papertype=None, format=None,
+            transparent=False, bbox_inches='tight', pad_inches=0,
+            frameon=False)
+        plt.close(figure)
