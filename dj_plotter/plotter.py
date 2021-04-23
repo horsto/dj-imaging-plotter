@@ -1012,7 +1012,7 @@ class dj_plotter():
                              
         ''' 
         # Process kwargs
-        cmap           = kwargs.get('cmap', 'inferno')
+        cmap           = kwargs.get('cmap', sns.husl_palette(as_cmap=True))
         display_score  = kwargs.get('display_score', None)
         hash_or_animal = kwargs.get('hash_or_animal', 'animal')
         draw_spikes    = kwargs.get('draw_spikes',True)
@@ -1436,6 +1436,10 @@ class dj_plotter():
                                  Show title? 
                 ax             : axis 
                                  Matplotlib axis to draw into 
+                path_suffix    : string
+                                 Appendix for filename, like _animalxy, default: empty string
+                despine        : bool
+                                 Whether to show axes or not (seaborn despine), default: True
             ''' 
 
             # Process kwargs
@@ -1460,6 +1464,9 @@ class dj_plotter():
             return_figure  = kwargs.get('return_figure',False)
             display_title  = kwargs.get('display_title', True)
             ax             = kwargs.get('ax', None)
+            path_suffix    = kwargs.get('path_suffix', '')
+            despine        = kwargs.get('despine', True)
+
 
             def __iscorr():
                 # Find out if we are dealing with "corr" corrected
@@ -1576,8 +1583,8 @@ class dj_plotter():
 
                 if no == 0:
                     # Get figure title
+                    title = self.__title(entry, color_mapping, hash_or_animal, show_cell=False)
                     if display_title:
-                        title = self.__title(entry, color_mapping, hash_or_animal, show_cell=False)
                         ax.set_title(title)
                     # Get image 
                     image_ = ax.imshow(entry[image_key], cmap=['gist_gray' if not invert_img_cmap else 'gist_gray_r'][0])
@@ -1617,11 +1624,11 @@ class dj_plotter():
             ax.set_xlim(entry[XLIM])
             ax.set_ylim(entry[YLIM][::-1])
 
-            sns.despine(left=True, bottom=True)   
+            sns.despine(left=despine, right=despine, bottom=despine, top=despine)   
 
             if (self.save_path is not None) and not external_axis: 
                 print('Saving figure under {}'.format(str(self.save_path)))
-                figure.savefig(self.save_path / f'rois {title}.{self.save_format}', dpi=300, bbox_inches='tight')
+                figure.savefig(self.save_path / f'rois {title}{path_suffix}.{self.save_format}', dpi=300, bbox_inches='tight')
 
             if return_axes:
                 return ax
