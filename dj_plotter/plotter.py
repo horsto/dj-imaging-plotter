@@ -1597,8 +1597,7 @@ class dj_plotter():
                     lambdas = entry[LAMBDA].copy()
                     lambdas = np.nan_to_num(lambdas)
                     if np.min(lambdas) < 0:
-                        lambdas += np.min(lambdas)
-                        lambdas += .01 # Make sure that there are no negative values (why is this necessary?)
+                        lambdas += np.abs(np.min(lambdas))
                     # Normalize alpha values
                     norm_alpha_px = lambdas / lambdas.max()
                     rgba_colors[:, 3] = norm_alpha_px 
