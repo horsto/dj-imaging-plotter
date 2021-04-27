@@ -1594,8 +1594,15 @@ class dj_plotter():
                     npixels = len(entry[PIXELS_X])
                     rgba_colors = np.broadcast_to(colors[no],(npixels,3))
                     rgba_colors = np.hstack((rgba_colors, np.zeros((npixels,1))))
-                    norm_alpha_px = entry[LAMBDA] / entry[LAMBDA].max()
+                    lambdas = entry[LAMBDA].copy()
+                    lambdas = np.nan_to_num(lambdas)
+                    if np.min(lambdas) < 0:
+                        lambdas += np.min(lambdas)
+                        lambdas += .01 # Make sure that there are no negative values (why is this necessary?)
+                    # Normalize alpha values
+                    norm_alpha_px = lambdas / lambdas.max()
                     rgba_colors[:, 3] = norm_alpha_px 
+                    #print(rgba_colors)
                     ax.scatter(entry[PIXELS_X], entry[PIXELS_Y], s=dot_size, lw=0, color=rgba_colors, marker='o')
 
                 if draw_centers:
