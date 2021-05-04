@@ -1642,20 +1642,19 @@ class dj_plotter():
                     color_scalebar = 'k'
                 else:
                     color_scalebar = 'w'
-                print(XLIM)
-                print(scalebar)
-                ax.plot([np.max(entry[XLIM])-scalebar-3,
-                         np.max(entry[XLIM])-scalebar-3+scalebar], 
-                         [np.max(entry[YLIM])-3,
-                          np.max(entry[YLIM])-3], 
-                         lw=3, color=color_scalebar, 
-                         alpha=.9, solid_capstyle='butt')
+
+                ax.plot([np.max(entry[XLIM])-scalebar-2,
+                         np.max(entry[XLIM])-scalebar-2+scalebar], 
+                         [np.max(entry[YLIM])-2,
+                          np.max(entry[YLIM])-2], 
+                         lw=4, color=color_scalebar, 
+                         alpha=.8, solid_capstyle='butt')
 
             sns.despine(left=despine, right=despine, bottom=despine, top=despine)   
 
             if (self.save_path is not None) and not external_axis: 
                 print('Saving figure under {}'.format(str(self.save_path)))
-                figure.savefig(self.save_path / f'rois {title}{path_suffix}.{self.save_format}', dpi=300, bbox_inches='tight')
+                figure.savefig(self.save_path / f'rois {title.split("|")[0]}{path_suffix}.{self.save_format}', dpi=300, bbox_inches='tight')
 
             if return_axes:
                 return ax
