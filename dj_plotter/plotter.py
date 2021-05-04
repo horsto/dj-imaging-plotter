@@ -1427,6 +1427,8 @@ class dj_plotter():
                                  Use this to color code cells according to certain properties.
                                  Defaults to random color palette based on husl only if 'color_mapping' 
                                  attribute is not set. 
+                scalebar       : float
+                                 Display scalebar of defined length [microns]
                 return_axes    : bool
                                  Return axes if True
                 return_figure  : bool
@@ -1460,6 +1462,7 @@ class dj_plotter():
             dot_size       = kwargs.get('dot_size', 5)
             alpha          = kwargs.get('alpha', .8)
             colors         = kwargs.get('colors', None)
+            scalebar       = kwargs.get('scalebar', None)
             return_axes    = kwargs.get('return_axes',False)
             return_figure  = kwargs.get('return_figure',False)
             display_title  = kwargs.get('display_title', True)
@@ -1467,7 +1470,10 @@ class dj_plotter():
             path_suffix    = kwargs.get('path_suffix', '')
             despine        = kwargs.get('despine', True)
 
-
+            # Sanity checks
+            if scalebar is not None: 
+                assert scalebar > 1.,'Given scalebar length ({}) is too small'
+            
             def __iscorr():
                 # Find out if we are dealing with "corr" corrected
                 # table output or non-corrected (raw) output
@@ -1622,13 +1628,28 @@ class dj_plotter():
                     outline = np.where(distance == 1)
                     ax.scatter(outline[1],outline[0], s=dot_size/10, c=[colors[no] if not draw_pixels else dot_color], alpha=alpha, marker='o')
 
-
             # Take care of axes styling 
             ax.axes.get_xaxis().set_visible(False)
             ax.axes.get_yaxis().set_visible(False)
 
             ax.set_xlim(entry[XLIM])
             ax.set_ylim(entry[YLIM][::-1])
+
+            # Display scale bar? 
+            if scalebar is not None: 
+                # Draw scalebar in bottom right corner with some margin
+                if not draw_image:
+                    color_scalebar = 'k'
+                else:
+                    color_scalebar = 'w'
+                print(XLIM)
+                print(scalebar)
+                ax.plot([np.max(entry[XLIM])-scalebar-3,
+                         np.max(entry[XLIM])-scalebar-3+scalebar], 
+                         [np.max(entry[YLIM])-3,
+                          np.max(entry[YLIM])-3], 
+                         lw=3, color=color_scalebar, 
+                         alpha=.9, solid_capstyle='butt')
 
             sns.despine(left=despine, right=despine, bottom=despine, top=despine)   
 

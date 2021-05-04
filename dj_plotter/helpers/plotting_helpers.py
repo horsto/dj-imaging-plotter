@@ -133,15 +133,19 @@ def make_linear_colormap(array, cmap='magma', desat=1, reference_numbers=None, c
     return np.array(colors)
 
 
-def make_colorbar(array, no_steps=60, font_scale=1, cmap='hls', **kwargs):
+def make_colorbar(array, 
+                  no_steps=60, 
+                  font_scale=1, 
+                  cmap='hls', 
+                  **kwargs
+                  ):
     ''' Draw a colorbar that can be copy+pasted next to another graph '''
 
-    sns.set(font_scale=1, style='white')
+    sns.set(font_scale=font_scale, style='white')
 
     return_figure = kwargs.get('return_figure', None)
     show_labels = kwargs.get('show_labels', True)
     
-
     if isinstance(cmap, list):
         color_palette = cmap
         if len(color_palette) < 100: print('Warning! Less than 100 distinct colors - is that what you want?')
@@ -179,6 +183,7 @@ def make_colorbar(array, no_steps=60, font_scale=1, cmap='hls', **kwargs):
         ax.set_xticklabels([])
     if return_figure:
         return figure
+
     plt.show()
 
 
