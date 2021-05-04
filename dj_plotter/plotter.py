@@ -293,18 +293,28 @@ class dj_plotter():
         if not external_axis: 
             figure = self.__create_figure_grid
 
+        plotted_cells_ids = []
         for no, key in tqdm_iterator:    
+            plotted_cells_ids.append(key['cell_id'])
+
 
             if no == total:
                 if (plot_counter > 0) and not external_axis:
                     if self.save_path is not None: 
                         print('Saving figure under {}'.format(str(self.save_path)))
-                        figure.savefig(self.save_path / f'ratemaps n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
+                        if plot_counter < 10:
+                            # Show the actual cell ids in export path 
+                            export_name = f'ratemaps cell {plotted_cells_ids}.{self.save_format}'
+                        else:
+                            export_name = f'ratemaps n={plot_counter}.{self.save_format}'
+                        figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+                else:
                     plt.show()
-                    plt.close()
+
                 # Premature stop? Make sure you close things gracefully:
                 tqdm_iterator.refresh()
                 tqdm._instances.clear()
+                plotted_cells_ids = []
                 break
             
             # Use keys or join object? 
@@ -350,13 +360,22 @@ class dj_plotter():
             if plot_counter >= self.plots_per_view:
                 if (self.save_path is not None) and not external_axis: 
                     print('Saving figure under {}'.format(str(self.save_path)))
-                    figure.savefig(self.save_path / f'ratemaps n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
-                
+                    if plot_counter < 10:
+                        # Show the actual cell ids in export path 
+                        export_name = f'ratemaps cell {plotted_cells_ids}.{self.save_format}'
+                    else:
+                        export_name = f'ratemaps n={plot_counter}.{self.save_format}'
+                    figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+                else: 
+                    plt.show()
+
+                plotted_cells_ids = []
                 plot_counter = 0
-                plt.show()
+                
                 # Create next figure
                 if not external_axis: 
                     figure = self.__create_figure_grid
+
 
             
         return
@@ -452,19 +471,27 @@ class dj_plotter():
         if not external_axis: 
             figure = self.__create_figure_grid
 
+        plotted_cells_ids = []
         for no, key in tqdm_iterator:    
-            
+            plotted_cells_ids.append(key['cell_id'])
+
             if no == total:
                 if (plot_counter > 0) and not external_axis:
                     if self.save_path is not None: 
                         print('Saving figure under {}'.format(str(self.save_path)))
-                        figure.savefig(self.save_path / f'autocorrs n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')      
+                        if plot_counter < 10:
+                            # Show the actual cell ids in export path 
+                            export_name = f'ratemaps cell {plotted_cells_ids}.{self.save_format}'
+                        else:
+                            export_name = f'ratemaps n={plot_counter}.{self.save_format}'
+                        figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+                else:
                     plt.show()
-                    plt.close()
 
                 # Premature stop? Make sure you close things gracefully:
                 tqdm_iterator.refresh()
                 tqdm._instances.clear()
+                plotted_cells_ids = []
                 break
             
             # Use keys or join object? 
@@ -491,10 +518,18 @@ class dj_plotter():
             if plot_counter >= self.plots_per_view:
                 if (self.save_path is not None) and not external_axis: 
                     print('Saving figure under {}'.format(str(self.save_path)))
-                    figure.savefig(self.save_path / f'autocorrs n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
-                
+                    if plot_counter < 10:
+                        # Show the actual cell ids in export path 
+                        export_name = f'autocorr cell {plotted_cells_ids}.{self.save_format}'
+                    else:
+                        export_name = f'autocorr n={plot_counter}.{self.save_format}'
+                    figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+                else: 
+                    plt.show()
+
+                plotted_cells_ids = []
                 plot_counter = 0
-                plt.show()
+
                 # Create next figure
                 if not external_axis: 
                     figure = self.__create_figure_grid
@@ -603,20 +638,26 @@ class dj_plotter():
         if not external_axis: 
             figure = self.__create_figure_grid
 
+        plotted_cells_ids = []
         for no, key in tqdm_iterator:    
             
             if no == total:
                 if (plot_counter > 0) and not external_axis:
-                    plt.tight_layout()
                     if self.save_path is not None: 
                         print('Saving figure under {}'.format(str(self.save_path)))
-                        figure.savefig(self.save_path / f'hdtuning n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
+                        if plot_counter < 10:
+                            # Show the actual cell ids in export path 
+                            export_name = f'ratemaps cell {plotted_cells_ids}.{self.save_format}'
+                        else:
+                            export_name = f'ratemaps n={plot_counter}.{self.save_format}'
+                        figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+                else:
                     plt.show()
-                    plt.close()
 
                 # Premature stop? Make sure you close things gracefully:
                 tqdm_iterator.refresh()
                 tqdm._instances.clear()
+                plotted_cells_ids = []
                 break
             
             # Use keys or join object? 
@@ -657,13 +698,20 @@ class dj_plotter():
                 ax.set_title(title, y=1.1)
 
             if plot_counter >= self.plots_per_view:
-                plt.tight_layout()
                 if (self.save_path is not None) and not external_axis: 
                     print('Saving figure under {}'.format(str(self.save_path)))
-                    figure.savefig(self.save_path / f'hdtuning n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
-                
+                    if plot_counter < 10:
+                        # Show the actual cell ids in export path 
+                        export_name = f'hdtuning cell {plotted_cells_ids}.{self.save_format}'
+                    else:
+                        export_name = f'hdtuning n={plot_counter}.{self.save_format}'
+                    figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+                else: 
+                    plt.show()
+
+                plotted_cells_ids = []
                 plot_counter = 0
-                plt.show()
+                
                 # Create next figure
                 if not external_axis: 
                     figure = self.__create_figure_grid
@@ -1097,20 +1145,26 @@ class dj_plotter():
         if not external_axis: 
             figure = self.__create_figure_grid
 
+        plotted_cells_ids = []
         for no, key in tqdm_iterator:    
             
             if no == total:
                 if (plot_counter > 0) and not external_axis:
                     if self.save_path is not None: 
                         print('Saving figure under {}'.format(str(self.save_path)))
-                        figure_export_text = ['spikes' if draw_spikes else ''][0]
-                        figure.savefig(self.save_path / f'tracking {figure_export_text} n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
-                    
+                        if plot_counter < 10:
+                            # Show the actual cell ids in export path 
+                            export_name = f'pathspike cell {plotted_cells_ids}.{self.save_format}'
+                        else:
+                            export_name = f'pathspike n={plot_counter}.{self.save_format}'
+                        figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+                else:
                     plt.show()
-                    plt.close()
+
                 # Premature stop? Make sure you close things gracefully:
                 tqdm_iterator.refresh()
                 tqdm._instances.clear()
+                plotted_cells_ids = []
                 break
             
             # Use keys or join object? 
@@ -1168,11 +1222,18 @@ class dj_plotter():
             if plot_counter >= self.plots_per_view:
                 if (self.save_path is not None) and not external_axis: 
                     print('Saving figure under {}'.format(str(self.save_path)))
-                    figure_export_text = ['spikes' if draw_spikes else ''][0]
-                    figure.savefig(self.save_path / f'tracking {figure_export_text} n={plot_counter} {self.__now()}.{self.save_format}', dpi=300, bbox_inches='tight')
-                
+                    if plot_counter < 10:
+                        # Show the actual cell ids in export path 
+                        export_name = f'pathspike cell {plotted_cells_ids}.{self.save_format}'
+                    else:
+                        export_name = f'pathspike n={plot_counter}.{self.save_format}'
+                    figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+                else: 
+                    plt.show()
+
+                plotted_cells_ids = []
                 plot_counter = 0
-                plt.show()
+                
                 # Create next figure
                 if not external_axis: 
                     figure = self.__create_figure_grid
