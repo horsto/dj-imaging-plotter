@@ -288,7 +288,7 @@ class dj_plotter():
                     'Length of cue card position array does not match length of cells to plot'
 
         # Make loop with tqdm progress bar
-        tqdm_iterator = self.__tqdm_iterator(iterator, total, 'Drawing ratemaps')
+        tqdm_iterator = self.__tqdm_iterator(iterator, total-1, 'Drawing ratemaps')
         
         if not external_axis: 
             figure = self.__create_figure_grid
@@ -302,14 +302,14 @@ class dj_plotter():
                 if (plot_counter > 0) and not external_axis:
                     if self.save_path is not None: 
                         print('Saving figure under {}'.format(str(self.save_path)))
-                        if plot_counter < 10:
+                        if plot_counter < 2:
                             # Show the actual cell ids in export path 
-                            export_name = f'ratemaps cell {plotted_cells_ids}.{self.save_format}'
+                            export_name = f'ratemaps {key["session_name"]} cell {plotted_cells_ids}.{self.save_format}'
                         else:
                             export_name = f'ratemaps n={plot_counter}.{self.save_format}'
                         figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
-                else:
-                    plt.show()
+                    else:
+                        plt.show()
 
                 # Premature stop? Make sure you close things gracefully:
                 tqdm_iterator.refresh()
@@ -360,9 +360,9 @@ class dj_plotter():
             if plot_counter >= self.plots_per_view:
                 if (self.save_path is not None) and not external_axis: 
                     print('Saving figure under {}'.format(str(self.save_path)))
-                    if plot_counter < 10:
+                    if plot_counter < 2:
                         # Show the actual cell ids in export path 
-                        export_name = f'ratemaps cell {plotted_cells_ids}.{self.save_format}'
+                        export_name = f'ratemaps {key["session_name"]} cell {plotted_cells_ids}.{self.save_format}'
                     else:
                         export_name = f'ratemaps n={plot_counter}.{self.save_format}'
                     figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
@@ -466,7 +466,7 @@ class dj_plotter():
             external_axis = False
 
         # Make loop with tqdm progress bar
-        tqdm_iterator = self.__tqdm_iterator(iterator, total, 'Drawing autocorrelations')
+        tqdm_iterator = self.__tqdm_iterator(iterator, total-1, 'Drawing autocorrelations')
        
         if not external_axis: 
             figure = self.__create_figure_grid
@@ -479,14 +479,14 @@ class dj_plotter():
                 if (plot_counter > 0) and not external_axis:
                     if self.save_path is not None: 
                         print('Saving figure under {}'.format(str(self.save_path)))
-                        if plot_counter < 10:
+                        if plot_counter < 2:
                             # Show the actual cell ids in export path 
-                            export_name = f'ratemaps cell {plotted_cells_ids}.{self.save_format}'
+                            export_name = f'autocorr {key["session_name"]} cell {plotted_cells_ids}.{self.save_format}'
                         else:
-                            export_name = f'ratemaps n={plot_counter}.{self.save_format}'
+                            export_name = f'autocorr n={plot_counter}.{self.save_format}'
                         figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
-                else:
-                    plt.show()
+                    else:
+                        plt.show()
 
                 # Premature stop? Make sure you close things gracefully:
                 tqdm_iterator.refresh()
@@ -518,9 +518,9 @@ class dj_plotter():
             if plot_counter >= self.plots_per_view:
                 if (self.save_path is not None) and not external_axis: 
                     print('Saving figure under {}'.format(str(self.save_path)))
-                    if plot_counter < 10:
+                    if plot_counter < 2:
                         # Show the actual cell ids in export path 
-                        export_name = f'autocorr cell {plotted_cells_ids}.{self.save_format}'
+                        export_name = f'autocorr {key["session_name"]} cell {plotted_cells_ids}.{self.save_format}'
                     else:
                         export_name = f'autocorr n={plot_counter}.{self.save_format}'
                     figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
@@ -633,7 +633,7 @@ class dj_plotter():
             external_axis = False
 
         # Make loop with tqdm progress bar
-        tqdm_iterator = self.__tqdm_iterator(iterator, total, 'Drawing HD tuning')
+        tqdm_iterator = self.__tqdm_iterator(iterator, total-1, 'Drawing HD tuning')
         
         if not external_axis: 
             figure = self.__create_figure_grid
@@ -645,14 +645,14 @@ class dj_plotter():
                 if (plot_counter > 0) and not external_axis:
                     if self.save_path is not None: 
                         print('Saving figure under {}'.format(str(self.save_path)))
-                        if plot_counter < 10:
+                        if plot_counter < 2:
                             # Show the actual cell ids in export path 
-                            export_name = f'ratemaps cell {plotted_cells_ids}.{self.save_format}'
+                            export_name = f'hdtuning {key["session_name"]} cell {plotted_cells_ids}.{self.save_format}'
                         else:
-                            export_name = f'ratemaps n={plot_counter}.{self.save_format}'
+                            export_name = f'hdtuning n={plot_counter}.{self.save_format}'
                         figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
-                else:
-                    plt.show()
+                    else:
+                        plt.show()
 
                 # Premature stop? Make sure you close things gracefully:
                 tqdm_iterator.refresh()
@@ -700,9 +700,9 @@ class dj_plotter():
             if plot_counter >= self.plots_per_view:
                 if (self.save_path is not None) and not external_axis: 
                     print('Saving figure under {}'.format(str(self.save_path)))
-                    if plot_counter < 10:
+                    if plot_counter < 2:
                         # Show the actual cell ids in export path 
-                        export_name = f'hdtuning cell {plotted_cells_ids}.{self.save_format}'
+                        export_name = f'hdtuning {key["session_name"]} cell {plotted_cells_ids}.{self.save_format}'
                     else:
                         export_name = f'hdtuning n={plot_counter}.{self.save_format}'
                     figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
@@ -817,7 +817,7 @@ class dj_plotter():
 
 
         # Make loop with tqdm progress bar
-        tqdm_iterator = self.__tqdm_iterator(iterator, total, 'Drawing ratemaps')
+        tqdm_iterator = self.__tqdm_iterator(iterator, total-1, 'Drawing ratemaps')
         
         for no, key in tqdm_iterator:    
 
@@ -941,7 +941,14 @@ class dj_plotter():
                 ax_base.set_title(title)
 
             plt.subplots_adjust(wspace=.29)
-            plt.show()
+
+            if self.save_path is not None: 
+                print('Saving figure under {}'.format(str(self.save_path)))
+                export_name = f'ratemaps ov {key["base_session"]} cell {key["cell_id"]}.{self.save_format}'
+                figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+            else:
+                plt.show()
+
 
         return
 
@@ -1140,7 +1147,7 @@ class dj_plotter():
             external_axis = False
 
         # Make loop with tqdm progress bar
-        tqdm_iterator = self.__tqdm_iterator(iterator, total, 'Drawing path-spike plots')
+        tqdm_iterator = self.__tqdm_iterator(iterator, total-1, 'Drawing path-spike plots')
         
         if not external_axis: 
             figure = self.__create_figure_grid
@@ -1152,9 +1159,9 @@ class dj_plotter():
                 if (plot_counter > 0) and not external_axis:
                     if self.save_path is not None: 
                         print('Saving figure under {}'.format(str(self.save_path)))
-                        if plot_counter < 10:
+                        if plot_counter < 2:
                             # Show the actual cell ids in export path 
-                            export_name = f'pathspike cell {plotted_cells_ids}.{self.save_format}'
+                            export_name = f'pathspike {key["session_name"]} cell {plotted_cells_ids}.{self.save_format}'
                         else:
                             export_name = f'pathspike n={plot_counter}.{self.save_format}'
                         figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
@@ -1222,18 +1229,24 @@ class dj_plotter():
             if plot_counter >= self.plots_per_view:
                 if (self.save_path is not None) and not external_axis: 
                     print('Saving figure under {}'.format(str(self.save_path)))
-                    if plot_counter < 10:
+                    if plot_counter < 2:
                         # Show the actual cell ids in export path 
-                        export_name = f'pathspike cell {plotted_cells_ids}.{self.save_format}'
+                        if not draw_spikes:
+                            export_name = f'path {key["session_name"]}.{self.save_format}'
+                        else: 
+                            export_name = f'pathspike {key["session_name"]} cell {plotted_cells_ids}.{self.save_format}'
                     else:
-                        export_name = f'pathspike n={plot_counter}.{self.save_format}'
+                        if not draw_spikes:
+                            export_name = f'path n={plot_counter}.{self.save_format}'
+                        else: 
+                            export_name = f'pathspike n={plot_counter}.{self.save_format}'
                     figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
                 else: 
                     plt.show()
 
                 plotted_cells_ids = []
                 plot_counter = 0
-                
+
                 # Create next figure
                 if not external_axis: 
                     figure = self.__create_figure_grid
@@ -1344,7 +1357,7 @@ class dj_plotter():
             total = len(iterator)
         
         # Make loop with tqdm progress bar
-        tqdm_iterator = self.__tqdm_iterator(iterator, total, 'Drawing path-spike plots')
+        tqdm_iterator = self.__tqdm_iterator(iterator, total-1, 'Drawing path-spike plots')
         
         for no, key in tqdm_iterator:    
             
@@ -1428,8 +1441,13 @@ class dj_plotter():
                 ax_base.set_title(title)
 
             sns.despine(left=True, bottom=True)    
-            plt.tight_layout()       
-            plt.show()
+            plt.tight_layout()    
+            if self.save_path is not None: 
+                print('Saving figure under {}'.format(str(self.save_path)))
+                export_name = f'pathspike ov {key["base_session"]} cell {key["cell_id"]}.{self.save_format}'
+                figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+            else:
+                plt.show()   
             
         return
 
@@ -1628,7 +1646,7 @@ class dj_plotter():
             
             # Make loop with tqdm progress bar
             # In this case it is just a very small "package" since most of the data will be pre-fetched
-            tqdm_iterator = self.__tqdm_iterator(iterator.proj(), len(iterator), 'Drawing ROIs')
+            tqdm_iterator = self.__tqdm_iterator(iterator.proj(), len(iterator)-1, 'Drawing ROIs')
             # Before looping, pre-fetch large results:  CENTER_X, CENTER_Y, PIXELS_X, PIXELS_Y etc
             pixel_data = pd.DataFrame(self.dj_object.fetch('KEY', *ATTR_ROIS, as_dict=True))
             pixel_data.set_index('cell_id',inplace=True)
