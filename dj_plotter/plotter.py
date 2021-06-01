@@ -1080,7 +1080,7 @@ class dj_plotter():
         path_dot_size  = kwargs.get('path_dot_size', 1.2)
         draw_hd        = kwargs.get('draw_hd', False)
         speed_scaler   = kwargs.get('speed_scaler', .5)
-        spike_scaler   = kwargs.get('spike_scaler', 60)
+        spike_scaler   = kwargs.get('spike_scaler', 80)
         spike_color    = kwargs.get('spike_color','k')
         alpha_path     = kwargs.get('alpha_path', 1)
         alpha_spikes   = kwargs.get('alpha_spikes', .7)
