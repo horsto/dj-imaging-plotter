@@ -1313,7 +1313,7 @@ class dj_plotter():
         path_dot_size  = kwargs.get('path_dot_size', 1.2)
         draw_hd        = kwargs.get('draw_hd', False)
         speed_scaler   = kwargs.get('speed_scaler', .5)
-        spike_scaler   = kwargs.get('spike_scaler', 120)
+        spike_scaler   = kwargs.get('spike_scaler', 80)
         spike_color    = kwargs.get('spike_color','k')
         alpha_path     = kwargs.get('alpha_path', 1)
         alpha_spikes   = kwargs.get('alpha_spikes', .7)
@@ -1421,7 +1421,7 @@ class dj_plotter():
                     else:
                         colors_spikes = [[spike_color] if isinstance(spike_color,list) else spike_color][0]
                     # Draw signal ...
-                    scaled_signal = (session_dict[session]['signal']['signal']/session_dict[session]['signal']['signal'].max())*spike_scaler
+                    scaled_signal = (session_dict[session]['signal']['signal']/np.percentile(session_dict[session]['signal']['signal'],95))*spike_scaler
                     ax.scatter(session_dict[session]['signal']['x_pos_signal'], session_dict[session]['signal']['y_pos_signal'], 
                                     s=scaled_signal, 
                                     c=colors_spikes, 
