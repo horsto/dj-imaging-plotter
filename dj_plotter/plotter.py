@@ -918,10 +918,24 @@ class dj_plotter():
 
 
             # Create colorbars
-            plt.colorbar(rm1, ax=ax_base, fraction=0.03)
-            plt.colorbar(rm1, ax=ax_object1, fraction=0.03)
+            #plt.colorbar(rm1, ax=ax_base, fraction=0.03)
             if not two_object_sess:
-                plt.colorbar(rm1, ax=ax_object2, fraction=0.03)
+                cbar_axes = [ax_base, ax_object1, ax_object2]
+                rms  = [rm1, rm2, rm3]
+                
+            else:
+                cbar_axes = [ax_base, ax_object1]
+                rms  = [rm1, rm2]
+            last_rm = rms[-1] 
+
+            for ax_, rm_ in zip(cbar_axes,rms): 
+                divider = make_axes_locatable(ax_)
+                cax = divider.append_axes("right", size="2%", pad=0.08)
+                cbar = plt.colorbar(rm_, cax=cax)
+                cbar.outline.set_visible(False)
+                if normalize_base and (rm_ != last_rm):
+                    cbar.remove()
+          
 
             # Add title
             if display_title:
@@ -1066,7 +1080,7 @@ class dj_plotter():
         path_dot_size  = kwargs.get('path_dot_size', 1.2)
         draw_hd        = kwargs.get('draw_hd', False)
         speed_scaler   = kwargs.get('speed_scaler', .5)
-        spike_scaler   = kwargs.get('spike_scaler', 120)
+        spike_scaler   = kwargs.get('spike_scaler', 60)
         spike_color    = kwargs.get('spike_color','k')
         alpha_path     = kwargs.get('alpha_path', 1)
         alpha_spikes   = kwargs.get('alpha_spikes', .7)
@@ -1195,7 +1209,7 @@ class dj_plotter():
                 else:
                     colors_spikes = [[spike_color] if isinstance(spike_color,list) else spike_color][0]
                 # Draw signal ...
-                scaled_signal = (entry['signal']/entry['signal'].max())*spike_scaler
+                scaled_signal = (entry['signal']/np.percentile(entry['signal'],95))*spike_scaler
                 ax.scatter(entry['x_pos_signal'], entry['y_pos_signal'], 
                                 s=scaled_signal, 
                                 c=colors_spikes, 
