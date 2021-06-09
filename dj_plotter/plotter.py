@@ -1478,7 +1478,11 @@ class dj_plotter():
 
                 image_key      : string
                                  Key of image to plot. Defaults to 'max_img'. 
-
+                percentile     : float
+                                 Percentile where to cap the colormap for image display
+                                 (e.g. 99. will compress the image into 0 to 99th percentile of its values)
+                                 This is useful for bringing out dim details that would otherwise be over-
+                                 shadowed by other, brighther details; it washes out details though
                 draw_centers   : bool
                                  Draw the center points? Defaults to True. 
                 draw_numbers   : bool 
@@ -1531,6 +1535,7 @@ class dj_plotter():
             color_mapping  = kwargs.get('color_mapping', None)
             draw_image     = kwargs.get('draw_image', False)
             image_key      = kwargs.get('image_key', 'max_img')
+            percentile     = kwargs.get('percentile', None)
             draw_centers   = kwargs.get('draw_centers', True)
             draw_numbers   = kwargs.get('draw_numbers', False)
             draw_pixels    = kwargs.get('draw_pixels', False)
@@ -1671,8 +1676,12 @@ class dj_plotter():
                     title = self.__title(entry, color_mapping, hash_or_animal, show_cell=False)
                     if display_title:
                         ax.set_title(title)
-                    # Get image 
-                    image_ = ax.imshow(entry[image_key], cmap=['gist_gray' if not invert_img_cmap else 'gist_gray_r'][0])
+                    # Plot image 
+                    image_ = ax.imshow(entry[image_key], 
+                                       cmap=['gist_gray' if not invert_img_cmap else 'gist_gray_r'][0],
+                                       vmin=np.nanmin(entry[image_key]),
+                                       vmax=[np.nanmax(entry[image_key]) if percentile is None else np.nanpercentile(entry[image_key], percentile)][0],
+                                       )
                     if not draw_image: image_.remove() # Need to draw it anyway first!
 
                 if draw_pixels:
@@ -1721,13 +1730,12 @@ class dj_plotter():
                     color_scalebar = 'k'
                 else:
                     color_scalebar = 'w'
-
-                ax.plot([np.max(entry[XLIM])-scalebar-2,
-                         np.max(entry[XLIM])-scalebar-2+scalebar], 
-                         [np.max(entry[YLIM])-2,
-                          np.max(entry[YLIM])-2], 
+                ax.plot([np.max(entry[XLIM])-scalebar-5,
+                         np.max(entry[XLIM])-scalebar-5+scalebar], 
+                         [np.max(entry[YLIM])-5,
+                          np.max(entry[YLIM])-5], 
                          lw=4, color=color_scalebar, 
-                         alpha=.8, solid_capstyle='butt')
+                         alpha=.95, solid_capstyle='butt')
 
             sns.despine(left=despine, right=despine, bottom=despine, top=despine)   
 
