@@ -20,7 +20,7 @@ imhotte = dj.schema('user_horsto_imaging')
 imhotte.spawn_missing_classes()
 
 
-def make_multi_session_object_dict(key):
+def make_multi_recording_object_dict(key):
     ''' 
     Loop over session / object configurations for one metasession and 
     collect session KEYs in dictionary for 
@@ -36,34 +36,34 @@ def make_multi_session_object_dict(key):
     
     # Take care of object sessions
     # Careful, ArenaObjectPos must be fully populated, all objects must be registered
-    session_dict = (Session.SessionType * \
+    recording_dict = (Recording.RecordingType * \
                     ArenaObjectPos & \
-                    'metasession_name = "{}"'.format(key['metasession_name'])).fetch('KEY', order_by='session_order ASC')
+                    'recording_name = "{}"'.format(key['recording_name'])).fetch('KEY', order_by='recording_order ASC')
     
-    if len(session_dict) > 2:
-        raise NotImplementedError(f'{len(session_dict)} object sessions / objects found, but > 2 not supported')
+    if len(recording_dict) > 2:
+        raise NotImplementedError(f'{len(recording_dict)} object sessions / objects found, but > 2 not supported')
     
     # Loop over sessions / objects and extract session dictionaries
     sessions = {}
-    for sess in session_dict:
+    for sess in recording_dict:
         if 'object1' not in sessions.keys():
             sessions['object1'] = sess
         else:
             sessions['object2'] = sess
         
     # Add base session
-    sessions['base'] = (Session.SessionType & \
-                        'metasession_name = "{}"'.format(key['metasession_name']) & \
+    sessions['base'] = (Recording.RecordingType & \
+                        'recording_name = "{}"'.format(key['recording_name']) & \
                         'sessiontype = "Open Field"').fetch1('KEY')
         
     return sessions
 
 
-def session_title_string(session_name):
+def recording_title_string(recording_name):
     # Create a string for display in the title of napari window or elsewhere
-    session_hash, animal_name, timestamp = (Session & f'session_name = "{session_name}"').fetch1('session_name','animal_name','timestamp')
+    recording_hash, animal_name, timestamp = (Recording & f'recording_name = "{recording_name}"').fetch1('recording_name','animal_name','timestamp')
     timestamp = datetime.strftime(timestamp, '%d.%m.%Y')
-    title_string = 'Session {} | Animal {} | {}'.format(session_hash, animal_name, timestamp)
+    title_string = 'Recording {} | Animal {} | {}'.format(recording_hash, animal_name, timestamp)
     return title_string 
 
 

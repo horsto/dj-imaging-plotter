@@ -187,7 +187,7 @@ def make_colorbar(array,
     plt.show()
 
 
-def draw_spike_matrix(spikes, tracking=[], offset_scaler=200, save=False, alpha=.002, **kwargs):
+def draw_event_matrix(events, tracking=[], offset_scaler=200, save=False, alpha=.002, **kwargs):
     sns.set(font_scale=1.1)
     sns.set_style('white',{'axes.facecolor': '1','font.family': ['sans-serif'], 'font.sans-serif': ['Helvetica','Helvetica Neue']})
     flattening_factor  = [kwargs['flattening'] if 'flattening' in kwargs.keys() else [0.000001]][0]
@@ -198,23 +198,23 @@ def draw_spike_matrix(spikes, tracking=[], offset_scaler=200, save=False, alpha=
     save_path = [kwargs['save_path'] if 'save_path' in kwargs.keys() else ''][0]
     if len(save_path): save=True
     framerate = [kwargs['framerate'] if 'framerate' in kwargs.keys() else 1][0]
-    time_axis = np.arange(spikes[0].size)/framerate
+    time_axis = np.arange(events[0].size)/framerate
     figsize = [kwargs['figsize'] if 'figsize' in kwargs.keys() else (15,6)][0]
         
     figure = plt.figure(figsize=figsize)
-    ax1 = plt.subplot2grid((6, 1), (0, 0),  rowspan=5) # spikes
+    ax1 = plt.subplot2grid((6, 1), (0, 0),  rowspan=5) # events
     ax2 = plt.subplot2grid((6, 1), (5, 0),  rowspan=1) # movement
     
-    total_cell_no = spikes.shape[0]
+    total_cell_no = events.shape[0]
     y_label_pos = []; y_label = []
 
-    for no, spikes_ in enumerate(tqdm(spikes, desc='Drawing spike matrix', leave=False)):     
+    for no, events_ in enumerate(tqdm(events, desc='Drawing event matrix', leave=False)):     
         offset = (no * offset_scaler)
-        spike_indices = spikes_ > 0
+        event_indices = events_ > 0
         
-        times_spike = time_axis[spike_indices]
-        spikes_ = spikes_[spike_indices] * flattening_factor # flatten
-        ax1.scatter(times_spike, spikes_ + offset, s=3, c=[colors[no] if len(colors) > 0 else 'k'], alpha=alpha, marker='|')
+        times_event = time_axis[event_indices]
+        events_ = events_[event_indices] * flattening_factor # flatten
+        ax1.scatter(times_event, events_ + offset, s=3, c=[colors[no] if len(colors) > 0 else 'k'], alpha=alpha, marker='|')
         y_label_pos.append(offset)
         y_label.append(no+1)
         

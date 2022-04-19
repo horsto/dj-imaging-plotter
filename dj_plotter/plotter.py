@@ -18,7 +18,7 @@ from skimage.filters import gaussian
 
 # Helpers
 from .helpers.plotting_helpers import make_circular_colormap, make_linear_colormap
-from .helpers.dj_utils import make_multi_session_object_dict, get_signal_indices
+from .helpers.dj_utils import make_multi_recording_object_dict, get_signal_indices
 
 # Additional matplotlib options
 import matplotlib as mpl
@@ -38,19 +38,19 @@ class dj_plotter():
 
 
     # Define which attributes (=column names) are required for functions to run 
-    SESSION_HASH     = 'session_name'
-    SESSION_HASH_OV  = 'base_session'
-    ANIMAL_NAME      = 'animal_name'
-    TIMESTAMP        = 'timestamp'
-    ATTR_RATEMAP     = ['ratemap','mask_rm','cell_id']
-    ATTR_AUTOCORR    = ['acorr','cell_id']
-    ATTR_ROIS        = ['center_x','center_y','xpix','ypix','x_range','y_range', 'lambda']
-    ATTR_ROIS_CORR   = ['center_x_corr','center_y_corr','xpix_corr','ypix_corr','x_range_microns_eff','y_range_microns_eff', 'lambda_corr']
-    ATTR_TRACKING    = ['x_pos','y_pos','speed','head_angle']
-    ATTR_PATHSPIKE   = [*ATTR_TRACKING, 'signal', 'x_pos_signal','y_pos_signal','head_angle_signal']
-    ATTR_RATEMAP_OV  = [] # For object vector case these data are retrieved "online"
-    ATTR_PATHSPIKE_OV= [] # "
-    ATTR_HDTUNING    = ['angle_centers', 'angular_occupancy', 'angular_rate']    
+    RECORDING_HASH     = 'recording_name'
+    RECORDING_HASH_OV  = 'base_session'
+    ANIMAL_NAME        = 'animal_name'
+    TIMESTAMP          = 'timestamp'
+    ATTR_TUNINGMAP     = ['tuningmap','mask_tm','cell_id']
+    ATTR_AUTOCORR      = ['acorr','cell_id']
+    ATTR_ROIS          = ['center_x','center_y','xpix','ypix','x_range','y_range', 'lambda']
+    ATTR_ROIS_CORR     = ['center_x_corr','center_y_corr','xpix_corr','ypix_corr','x_range_microns_eff','y_range_microns_eff', 'lambda_corr']
+    ATTR_TRACKING      = ['x_pos','y_pos','speed','head_angle']
+    ATTR_PATHEVENT     = [*ATTR_TRACKING, 'signal', 'x_pos_signal','y_pos_signal','head_angle_signal']
+    ATTR_TUNINGMAP_OV  = [] # For object vector case these data are retrieved "online"
+    ATTR_PATHEVENT_OV  = [] # "
+    ATTR_HDTUNING      = ['angle_centers', 'angular_occupancy', 'angular_tuning']    
 
     def __init__(self, dj_object, keys=None, *args, **kwargs):
         '''
@@ -163,9 +163,9 @@ class dj_plotter():
 
         if hash_or_animal == 'hash':
             if not ov:
-                hash_or_animal_string = entry[self.SESSION_HASH]
+                hash_or_animal_string = entry[self.RECORDING_HASH]
             else:
-                hash_or_animal_string = entry[self.SESSION_HASH_OV]
+                hash_or_animal_string = entry[self.RECORDING_HASH_OV]
         elif hash_or_animal == 'animal':
             ts = datetime.strftime(entry[self.TIMESTAMP],'| %d.%m.%Y | %H:%M')
             hash_or_animal_string = f'{entry[self.ANIMAL_NAME]} {ts}'    
@@ -192,9 +192,9 @@ class dj_plotter():
     #########################                   DRAWING
 
 
-    def ratemaps(self, **kwargs):
+    def tuningmaps(self, **kwargs):
         ''' 
-        Plot ratemaps in 5x5 grid
+        Plot tuningmaps in 5x5 grid
         Optionally shows score for every subplot if available.
         
         Parameters
@@ -234,24 +234,24 @@ class dj_plotter():
         ax             = kwargs.get('ax', None)
 
         # Prepare list of attributes to check:
-        ATTR_RATEMAP = self.ATTR_RATEMAP.copy()
+        ATTR_TUNINGMAP = self.ATTR_TUNINGMAP.copy()
         # Display session hash or animal_name/timestamp? 
         if hash_or_animal == 'hash':
-            ATTR_RATEMAP.append(self.SESSION_HASH)
+            ATTR_TUNINGMAP.append(self.RECORDING_HASH)
         elif hash_or_animal == 'animal':
-            ATTR_RATEMAP.append(self.ANIMAL_NAME)
-            ATTR_RATEMAP.append(self.TIMESTAMP)    
+            ATTR_TUNINGMAP.append(self.ANIMAL_NAME)
+            ATTR_TUNINGMAP.append(self.TIMESTAMP)    
         else:
             raise NameError(f'Keyword "{hash_or_animal}" not recognized')
         # Display a score?
         if display_score is not None and isinstance(display_score, str):
-            ATTR_RATEMAP.append(display_score)
+            ATTR_TUNINGMAP.append(display_score)
         else:
             display_score = None
 
         # Check attributes in datajoint join 
-        if not self.__check_join_integrity(ATTR_RATEMAP): 
-            raise KeyError('One or more of these were not found: {}'.format(ATTR_RATEMAP))
+        if not self.__check_join_integrity(ATTR_TUNINGMAP): 
+            raise KeyError('One or more of these were not found: {}'.format(ATTR_TUNINGMAP))
        
 
         ###########################################################################
@@ -288,7 +288,7 @@ class dj_plotter():
                     'Length of cue card position array does not match length of cells to plot'
 
         # Make loop with tqdm progress bar
-        tqdm_iterator = self.__tqdm_iterator(iterator, total-1, 'Drawing ratemaps')
+        tqdm_iterator = self.__tqdm_iterator(iterator, total-1, 'Drawing tuningmaps')
         
         if not external_axis: 
             figure = self.__create_figure_grid
@@ -302,9 +302,9 @@ class dj_plotter():
                         print('Saving figure under {}'.format(str(self.save_path)))
                         if plot_counter < 2:
                             # Show the actual cell ids in export path 
-                            export_name = f'ratemaps {key["session_name"]} cell {key["cell_id"]}.{self.save_format}'
+                            export_name = f'tuningmaps {key["recording_name"]} cell {key["cell_id"]}.{self.save_format}'
                         else:
-                            export_name = f'ratemaps n={plot_counter}.{self.save_format}'
+                            export_name = f'tuningmaps n={plot_counter}.{self.save_format}'
                         figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
                     else:
                         plt.show()
@@ -320,15 +320,15 @@ class dj_plotter():
             else:
                 entry = key 
                 
-            ratemap = np.ma.masked_array(entry['ratemap'], mask=entry['mask_rm'])
-            ratemap = ratemap.filled(fill_value=0)
+            tuningmap = np.ma.masked_array(entry['tuningmap'], mask=entry['mask_tm'])
+            tuningmap = tuningmap.filled(fill_value=0)
             # Get subplot title
             
             plot_counter += 1
             if not external_axis: 
                 ax = figure.add_subplot(5,5,plot_counter)
 
-            ax.imshow(ratemap, cmap=cmap, vmin=np.nanmin(ratemap), vmax=np.nanpercentile(ratemap,99))
+            ax.imshow(tuningmap, cmap=cmap, vmin=np.nanmin(tuningmap), vmax=np.nanpercentile(tuningmap,99))
             ax.set_aspect('equal')
             ax.get_xaxis().set_ticks([]);ax.get_yaxis().set_ticks([])    
             
@@ -341,7 +341,7 @@ class dj_plotter():
             
             # Draw cue card?
             if cue_card_pos is not None: 
-                size = ratemap.shape
+                size = tuningmap.shape
                 card_pos = cue_card_pos[no]
                 if card_pos == 'west':
                     ax.plot([0.,0.],[size[0]/2-5,size[0]/2+5], lw=5, color='white', clip_on=False, zorder=10, solid_capstyle='butt')
@@ -359,9 +359,9 @@ class dj_plotter():
                     print('Saving figure under {}'.format(str(self.save_path)))
                     if plot_counter < 2:
                         # Show the actual cell ids in export path 
-                        export_name = f'ratemaps {key["session_name"]} cell {key["cell_id"]}.{self.save_format}'
+                        export_name = f'tuningmaps {key["recording_name"]} cell {key["cell_id"]}.{self.save_format}'
                     else:
-                        export_name = f'ratemaps n={plot_counter}.{self.save_format}'
+                        export_name = f'tuningmaps n={plot_counter}.{self.save_format}'
                     figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
                 else: 
                     plt.show()
@@ -419,7 +419,7 @@ class dj_plotter():
         ATTR_AUTOCORR = self.ATTR_AUTOCORR.copy()
         # Display session hash or animal_name/timestamp? 
         if hash_or_animal == 'hash':
-            ATTR_AUTOCORR.append(self.SESSION_HASH)
+            ATTR_AUTOCORR.append(self.RECORDING_HASH)
         elif hash_or_animal == 'animal':
             ATTR_AUTOCORR.append(self.ANIMAL_NAME)
             ATTR_AUTOCORR.append(self.TIMESTAMP)    
@@ -475,7 +475,7 @@ class dj_plotter():
                         print('Saving figure under {}'.format(str(self.save_path)))
                         if plot_counter < 2:
                             # Show the actual cell ids in export path 
-                            export_name = f'autocorr {key["session_name"]} cell {key["cell_id"]}.{self.save_format}'
+                            export_name = f'autocorr {key["recording_name"]} cell {key["cell_id"]}.{self.save_format}'
                         else:
                             export_name = f'autocorr n={plot_counter}.{self.save_format}'
                         figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
@@ -513,7 +513,7 @@ class dj_plotter():
                     print('Saving figure under {}'.format(str(self.save_path)))
                     if plot_counter < 2:
                         # Show the actual cell ids in export path 
-                        export_name = f'autocorr {key["session_name"]} cell {key["cell_id"]}.{self.save_format}'
+                        export_name = f'autocorr {key["recording_name"]} cell {key["cell_id"]}.{self.save_format}'
                     else:
                         export_name = f'autocorr n={plot_counter}.{self.save_format}'
                     figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
@@ -577,7 +577,7 @@ class dj_plotter():
         ATTR_HDTUNING = self.ATTR_HDTUNING.copy()
         # Display session hash or animal_name/timestamp? 
         if hash_or_animal == 'hash':
-            ATTR_HDTUNING.append(self.SESSION_HASH)
+            ATTR_HDTUNING.append(self.RECORDING_HASH)
         elif hash_or_animal == 'animal':
             ATTR_HDTUNING.append(self.ANIMAL_NAME)
             ATTR_HDTUNING.append(self.TIMESTAMP)    
@@ -590,7 +590,7 @@ class dj_plotter():
             display_score = None
 
         if only_occupancy:
-            ATTR_HDTUNING.remove('angular_rate')
+            ATTR_HDTUNING.remove('angular_tuning')
         if color_hd: 
             ATTR_HDTUNING.append('angular_mean')
 
@@ -638,7 +638,7 @@ class dj_plotter():
                         print('Saving figure under {}'.format(str(self.save_path)))
                         if plot_counter < 2:
                             # Show the actual cell ids in export path 
-                            export_name = f'hdtuning {key["session_name"]} cell {key["cell_id"]}.{self.save_format}'
+                            export_name = f'hdtuning {key["recording_name"]} cell {key["cell_id"]}.{self.save_format}'
                         else:
                             export_name = f'hdtuning n={plot_counter}.{self.save_format}'
                         figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
@@ -672,7 +672,7 @@ class dj_plotter():
 
             ax.plot(entry['angle_centers'], entry['angular_occupancy']/np.nanmax(entry['angular_occupancy']), \
                                         color='k', alpha=[1. if only_occupancy else .4][0], lw=line_width_)
-            ax.plot(entry['angle_centers'], entry['angular_rate']/np.nanmax(entry['angular_rate']), color=color_line, lw=line_width_, alpha=.85)
+            ax.plot(entry['angle_centers'], entry['angular_tuning']/np.nanmax(entry['angular_tuning']), color=color_line, lw=line_width_, alpha=.85)
             if only_occupancy:
                 del ax.lines[1] # Get rid of second drawn line, i.e. the actual tuning curve. This keeps the y axis scaling intact.
             
@@ -692,7 +692,7 @@ class dj_plotter():
                     print('Saving figure under {}'.format(str(self.save_path)))
                     if plot_counter < 2:
                         # Show the actual cell ids in export path 
-                        export_name = f'hdtuning {key["session_name"]} cell {key["cell_id"]}.{self.save_format}'
+                        export_name = f'hdtuning {key["recording_name"]} cell {key["cell_id"]}.{self.save_format}'
                     else:
                         export_name = f'hdtuning n={plot_counter}.{self.save_format}'
                     figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
@@ -713,12 +713,12 @@ class dj_plotter():
 
     ###########################################################################
 
-    def ratemaps_ov(self, **kwargs):
+    def tuningmaps_ov(self, **kwargs):
         ''' 
         SPECIAL! 
         - This function gets data for each session 
 
-        Plot ratemaps for object vector (ov) cells (1x3):
+        Plot tuningmaps for object vector (ov) cells (1x3):
              - base_session
              - object1_session
              - object2_session 
@@ -747,6 +747,8 @@ class dj_plotter():
                             Show title? 
             cue_card_pos  : list or string
                             Cue card position in (tracked) field ['north','south','west','east']
+            hide_cbar_axis: boolean
+                            Hide the colorbar axis label(s)?
                         
         '''
         
@@ -759,26 +761,27 @@ class dj_plotter():
         normalize_base = kwargs.get('normalize_base', True)
         display_title  = kwargs.get('display_title', True)
         cue_card_pos   = kwargs.get('cue_card_pos', None)
+        hide_cbar_axis = kwargs.get('hide_cbar_axis', False)
 
         # Prepare list of attributes to check:
-        ATTR_RATEMAP_OV = self.ATTR_RATEMAP_OV.copy()
+        ATTR_TUNINGMAP_OV = self.ATTR_TUNINGMAP_OV.copy()
         # Display session hash or animal_name/timestamp? 
         if hash_or_animal == 'hash':
-            ATTR_RATEMAP_OV.append(self.SESSION_HASH_OV)
+            ATTR_TUNINGMAP_OV.append(self.RECORDING_HASH_OV)
         elif hash_or_animal == 'animal':
-            ATTR_RATEMAP_OV.append(self.ANIMAL_NAME)
-            ATTR_RATEMAP_OV.append(self.TIMESTAMP)    
+            ATTR_TUNINGMAP_OV.append(self.ANIMAL_NAME)
+            ATTR_TUNINGMAP_OV.append(self.TIMESTAMP)    
         else:
             raise NameError(f'Keyword "{hash_or_animal}" not recognized')
         # Display a score?
         if display_score is not None and isinstance(display_score, str):
-            ATTR_RATEMAP_OV.append(display_score)
+            ATTR_TUNINGMAP_OV.append(display_score)
         else:
             display_score = None
 
         # Check attributes in datajoint join 
-        if not self.__check_join_integrity(ATTR_RATEMAP_OV): 
-            raise KeyError('One or more of these were not found: {}'.format(ATTR_RATEMAP_OV))
+        if not self.__check_join_integrity(ATTR_TUNINGMAP_OV): 
+            raise KeyError('One or more of these were not found: {}'.format(ATTR_TUNINGMAP_OV))
        
 
         ###########################################################################
@@ -806,7 +809,7 @@ class dj_plotter():
 
 
         # Make loop with tqdm progress bar
-        tqdm_iterator = self.__tqdm_iterator(iterator, total-1, 'Drawing ratemaps')
+        tqdm_iterator = self.__tqdm_iterator(iterator, total-1, 'Drawing tuningmaps')
         
         for no, key in tqdm_iterator:    
 
@@ -824,11 +827,11 @@ class dj_plotter():
                 entry = key 
 
             # Get session dictionary object vector 
-            session_dict         = make_multi_session_object_dict(entry)
-            session_dict, max_rm = _get_ovc_ratemaps(session_dict, entry) # Returns ratemaps and object positions and max over ratemaps
+            recording_dict         = make_multi_recording_object_dict(entry)
+            recording_dict, max_rm = _get_ovc_tuningmaps(recording_dict, entry) # Returns tuningmaps and object positions and max over tuningmaps
 
 
-            if session_dict['object1']['session_name'] == session_dict['object2']['session_name']:
+            if recording_dict['object1']['recording_name'] == recording_dict['object2']['recording_name']:
                 two_object_sess = True # This is a "special case" -> 2 objects in one session 
                 figure = self.__create_figure_grid_ov_2
                 ax_base    = figure.add_subplot(1,2,1)
@@ -845,33 +848,33 @@ class dj_plotter():
 
             # Fill axes 
             if normalize_base:
-                rm1 = ax_base.imshow(session_dict['base']['ratemap'], vmin=0, vmax=max_rm, cmap=cmap) # Normalized view
-                rm2 = ax_object1.imshow(session_dict['object1']['ratemap'], vmin=0, vmax=max_rm, cmap=cmap) 
+                rm1 = ax_base.imshow(recording_dict['base']['tuningmap'], vmin=0, vmax=max_rm, cmap=cmap) # Normalized view
+                rm2 = ax_object1.imshow(recording_dict['object1']['tuningmap'], vmin=0, vmax=max_rm, cmap=cmap) 
                 if not two_object_sess:
-                    rm3 = ax_object2.imshow(session_dict['object2']['ratemap'], vmin=0, vmax=max_rm, cmap=cmap) 
+                    rm3 = ax_object2.imshow(recording_dict['object2']['tuningmap'], vmin=0, vmax=max_rm, cmap=cmap) 
 
             else: 
-                rm1 = ax_base.imshow(session_dict['base']['ratemap'], cmap=cmap) 
-                rm2 = ax_object1.imshow(session_dict['object1']['ratemap'], cmap=cmap) 
+                rm1 = ax_base.imshow(recording_dict['base']['tuningmap'], cmap=cmap) 
+                rm2 = ax_object1.imshow(recording_dict['object1']['tuningmap'], cmap=cmap) 
                 if not two_object_sess:
-                    rm3 = ax_object2.imshow(session_dict['object2']['ratemap'], cmap=cmap)      
+                    rm3 = ax_object2.imshow(recording_dict['object2']['tuningmap'], cmap=cmap)      
 
             # Draw objects
-            ax_object1.scatter(session_dict['object1']['object_x_rm'], session_dict['object1']['object_y_rm'], marker='s', s=800, color='k')
-            ax_object1.scatter(session_dict['object1']['object_x_rm'], session_dict['object1']['object_y_rm'], marker='s', s=500, color='#ccc')
-            ax_object1.scatter(session_dict['object1']['object_x_rm'], session_dict['object1']['object_y_rm'], marker='s', s=300, color='w')
-            ax_object1.scatter(session_dict['object1']['object_x_rm'], session_dict['object1']['object_y_rm'], marker='x', s=100, color='k')
+            ax_object1.scatter(recording_dict['object1']['object_x_rm'], recording_dict['object1']['object_y_rm'], marker='s', s=800, color='k')
+            ax_object1.scatter(recording_dict['object1']['object_x_rm'], recording_dict['object1']['object_y_rm'], marker='s', s=500, color='#ccc')
+            ax_object1.scatter(recording_dict['object1']['object_x_rm'], recording_dict['object1']['object_y_rm'], marker='s', s=300, color='w')
+            ax_object1.scatter(recording_dict['object1']['object_x_rm'], recording_dict['object1']['object_y_rm'], marker='x', s=100, color='k')
             if not two_object_sess:
-                ax_object2.scatter(session_dict['object2']['object_x_rm'], session_dict['object2']['object_y_rm'], marker='s', s=800, color='k')
-                ax_object2.scatter(session_dict['object2']['object_x_rm'], session_dict['object2']['object_y_rm'], marker='s', s=500, color='#ccc')
-                ax_object2.scatter(session_dict['object2']['object_x_rm'], session_dict['object2']['object_y_rm'], marker='s', s=300, color='w')
-                ax_object2.scatter(session_dict['object2']['object_x_rm'], session_dict['object2']['object_y_rm'], marker='x', s=100, color='k')
+                ax_object2.scatter(recording_dict['object2']['object_x_rm'], recording_dict['object2']['object_y_rm'], marker='s', s=800, color='k')
+                ax_object2.scatter(recording_dict['object2']['object_x_rm'], recording_dict['object2']['object_y_rm'], marker='s', s=500, color='#ccc')
+                ax_object2.scatter(recording_dict['object2']['object_x_rm'], recording_dict['object2']['object_y_rm'], marker='s', s=300, color='w')
+                ax_object2.scatter(recording_dict['object2']['object_x_rm'], recording_dict['object2']['object_y_rm'], marker='x', s=100, color='k')
             else:
                 # Draw second object into object 1 session axis
-                ax_object1.scatter(session_dict['object2']['object_x_rm'], session_dict['object2']['object_y_rm'], marker='s', s=800, color='k')
-                ax_object1.scatter(session_dict['object2']['object_x_rm'], session_dict['object2']['object_y_rm'], marker='s', s=500, color='#ccc')
-                ax_object1.scatter(session_dict['object2']['object_x_rm'], session_dict['object2']['object_y_rm'], marker='s', s=300, color='w')
-                ax_object1.scatter(session_dict['object2']['object_x_rm'], session_dict['object2']['object_y_rm'], marker='x', s=100, color='k')
+                ax_object1.scatter(recording_dict['object2']['object_x_rm'], recording_dict['object2']['object_y_rm'], marker='s', s=800, color='k')
+                ax_object1.scatter(recording_dict['object2']['object_x_rm'], recording_dict['object2']['object_y_rm'], marker='s', s=500, color='#ccc')
+                ax_object1.scatter(recording_dict['object2']['object_x_rm'], recording_dict['object2']['object_y_rm'], marker='s', s=300, color='w')
+                ax_object1.scatter(recording_dict['object2']['object_x_rm'], recording_dict['object2']['object_y_rm'], marker='x', s=100, color='k')
             
 
             ax_base.set_aspect('equal')
@@ -891,7 +894,7 @@ class dj_plotter():
 
             # Draw cue card?
             if cue_card_pos is not None: 
-                size = session_dict['base']['ratemap'].shape # Just take one of them for now - should be fine
+                size = recording_dict['base']['tuningmap'].shape # Just take one of them for now - should be fine
                 card_pos = cue_card_pos[no]
                 if card_pos == 'west':
                     ax_base.plot([0.,0.],[size[0]/2-5,size[0]/2+5], lw=3.5, color='white', clip_on=False, zorder=10, solid_capstyle='butt')
@@ -930,9 +933,15 @@ class dj_plotter():
 
             for ax_, rm_ in zip(cbar_axes,rms): 
                 divider = make_axes_locatable(ax_)
-                cax = divider.append_axes("right", size="2%", pad=0.08)
+                cax = divider.append_axes("right", size="6%", pad=0.11)
                 cbar = plt.colorbar(rm_, cax=cax)
                 cbar.outline.set_visible(False)
+                
+                if hide_cbar_axis:
+                    #cbar.ax.set_ticks()
+                    cbar.ax.set_yticklabels([])
+                else: 
+                    cbar.ax.tick_params(labelsize=18)
                 if normalize_base and (rm_ != last_rm):
                     cbar.remove()
           
@@ -943,11 +952,11 @@ class dj_plotter():
                 title = self.__title(entry, display_score, hash_or_animal, ov=True)
                 ax_base.set_title(title)
 
-            plt.subplots_adjust(wspace=.29)
+            plt.subplots_adjust(wspace=.1)
 
             if self.save_path is not None: 
                 print('Saving figure under {}'.format(str(self.save_path)))
-                export_name = f'ratemaps ov {key["base_session"]} cell {key["cell_id"]}.{self.save_format}'
+                export_name = f'tuningmaps ov {key["base_session"]} cell {key["cell_id"]}.{self.save_format}'
                 figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
             else:
                 plt.show()
@@ -961,7 +970,7 @@ class dj_plotter():
         ''' 
         Plot tracking plots in 5x5 grid
         Optionally shows score for every subplot if available.
-        ! This uses self.path_spike(draw_spikes=False) to generate plots.
+        ! This uses self.path_event(draw_events=False) to generate plots.
         
         Parameters
         ----------
@@ -1008,7 +1017,7 @@ class dj_plotter():
         display_title  = kwargs.get('display_title', True)
         ax             = kwargs.get('ax', None)
 
-        self.path_spike(draw_spikes=False, cmap=cmap, \
+        self.path_event(draw_events=False, cmap=cmap, \
                             display_score=display_score, hash_or_animal=hash_or_animal,
                             draw_speed=draw_speed,  path_dot_size=path_dot_size,
                             draw_angle=draw_angle, speed_scaler=speed_scaler, alpha_path=alpha_path, 
@@ -1018,9 +1027,9 @@ class dj_plotter():
 
 
 
-    def path_spike(self, **kwargs):
+    def path_event(self, **kwargs):
         ''' 
-        Plot path-spike plots in 5x5 grid
+        Plot path-event plots in 5x5 grid
         Optionally shows score for every subplot if available.
         ! This is used also as plotting container function for self.tracking().
         
@@ -1040,8 +1049,8 @@ class dj_plotter():
                             Name of the score (=column name) to display in title 
                             of each subplot.
                             Defaults to None.
-            draw_spikes   : bool
-                            Show spikes? 
+            draw_events   : bool
+                            Show events? 
             draw_speed    : bool
                             Encode speed in size of dots in path plot? 
             draw_angle    : bool 
@@ -1052,16 +1061,16 @@ class dj_plotter():
                             If draw_speed==False: Dot size for tracking
             draw_hd       : bool
                             Encode angle in color of dots in plot?
-                            If draw_spikes==False this will color the path plot
-                            If draw_spikes==True this will color the spikes
+                            If draw_events==False this will color the path plot
+                            If draw_events==True this will color the events
             speed_scaler  : float
                             How much smaller than actual speed should dot size be?
-            spike_scaler  : float
-                            How much smaller than actual spike size should the dot be?
-            spike_color   : list/string
-                            Valid color for spikes; defaults to 'k'
+            event_scaler  : float
+                            How much smaller than actual event size should the dot be?
+            event_color   : list/string
+                            Valid color for events; defaults to 'k'
             alpha_path    : float
-            alpha_spikes  : float
+            alpha_events  : float
             display_title : bool 
                             Show title? 
 
@@ -1073,17 +1082,17 @@ class dj_plotter():
         cmap           = kwargs.get('cmap', sns.husl_palette(as_cmap=True))
         display_score  = kwargs.get('display_score', None)
         hash_or_animal = kwargs.get('hash_or_animal', 'animal')
-        draw_spikes    = kwargs.get('draw_spikes',True)
+        draw_events    = kwargs.get('draw_events',True)
         draw_speed     = kwargs.get('draw_speed', False)
         draw_angle     = kwargs.get('draw_angle', False)
         draw_time      = kwargs.get('draw_time', False)
         path_dot_size  = kwargs.get('path_dot_size', 1.2)
         draw_hd        = kwargs.get('draw_hd', False)
         speed_scaler   = kwargs.get('speed_scaler', .5)
-        spike_scaler   = kwargs.get('spike_scaler', 80)
-        spike_color    = kwargs.get('spike_color','k')
+        event_scaler   = kwargs.get('event_scaler', 80)
+        event_color    = kwargs.get('event_color','k')
         alpha_path     = kwargs.get('alpha_path', 1)
-        alpha_spikes   = kwargs.get('alpha_spikes', .7)
+        alpha_events   = kwargs.get('alpha_events', .7)
         display_title  = kwargs.get('display_title', True)
         ax             = kwargs.get('ax', None)
 
@@ -1095,33 +1104,33 @@ class dj_plotter():
             cmap = plt.get_cmap(cmap).colors
 
         # Prepare list of attributes to check:
-        if draw_spikes:
-            ATTR_PATHSPIKE = self.ATTR_PATHSPIKE.copy()
+        if draw_events:
+            ATTR_PATHEVENT = self.ATTR_PATHEVENT.copy()
         else:
-            # If no spikes should be shown, use a short TRACKING attributes list
-            ATTR_PATHSPIKE = self.ATTR_TRACKING.copy()
+            # If no events should be shown, use a short TRACKING attributes list
+            ATTR_PATHEVENT = self.ATTR_TRACKING.copy()
         # Display session hash or animal_name/timestamp? 
         if hash_or_animal == 'hash':
-            ATTR_PATHSPIKE.append(self.SESSION_HASH)
+            ATTR_PATHEVENT.append(self.RECORDING_HASH)
         elif hash_or_animal == 'animal':
-            ATTR_PATHSPIKE.append(self.ANIMAL_NAME)
-            ATTR_PATHSPIKE.append(self.TIMESTAMP)    
+            ATTR_PATHEVENT.append(self.ANIMAL_NAME)
+            ATTR_PATHEVENT.append(self.TIMESTAMP)    
         else:
             raise NameError(f'Keyword "{hash_or_animal}" not recognized')
         # Display a score?
         if display_score is not None and isinstance(display_score, str):
-            ATTR_PATHSPIKE.append(display_score)
+            ATTR_PATHEVENT.append(display_score)
         else:
             display_score = None
 
         if draw_speed:
-            ATTR_PATHSPIKE.append('speed')
+            ATTR_PATHEVENT.append('speed')
         if draw_hd or draw_angle:
-            ATTR_PATHSPIKE.append('head_angle')
+            ATTR_PATHEVENT.append('head_angle')
         
         # Check attributes in datajoint join 
-        if not self.__check_join_integrity(ATTR_PATHSPIKE): 
-            raise KeyError('One or more of these were not found: {}'.format(ATTR_PATHSPIKE))
+        if not self.__check_join_integrity(ATTR_PATHEVENT): 
+            raise KeyError('One or more of these were not found: {}'.format(ATTR_PATHEVENT))
        
 
         ###########################################################################
@@ -1150,7 +1159,7 @@ class dj_plotter():
             external_axis = False
 
         # Make loop with tqdm progress bar
-        tqdm_iterator = self.__tqdm_iterator(iterator, total-1, 'Drawing path-spike plots')
+        tqdm_iterator = self.__tqdm_iterator(iterator, total-1, 'Drawing path-event plots')
         
         if not external_axis: 
             figure = self.__create_figure_grid
@@ -1163,9 +1172,9 @@ class dj_plotter():
                         print('Saving figure under {}'.format(str(self.save_path)))
                         if plot_counter < 2:
                             # Show the actual cell ids in export path 
-                            export_name = f'pathspike {key["session_name"]} cell {key["cell_id"]}.{self.save_format}'
+                            export_name = f'pathevent {key["recording_name"]} cell {key["cell_id"]}.{self.save_format}'
                         else:
-                            export_name = f'pathspike n={plot_counter}.{self.save_format}'
+                            export_name = f'pathevent n={plot_counter}.{self.save_format}'
                         figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
                 else:
                     plt.show()
@@ -1184,7 +1193,7 @@ class dj_plotter():
             plot_counter +=1
             if not external_axis: 
                 ax = figure.add_subplot(5,5,plot_counter)
-            if not draw_spikes:  
+            if not draw_events:  
 
                 ax.scatter(entry['x_pos'], entry['y_pos'],
                             s=[path_dot_size if not draw_speed else (entry['speed']/np.percentile(entry['speed'],95))/speed_scaler],
@@ -1192,6 +1201,8 @@ class dj_plotter():
                             lw=0,
                             alpha=alpha_path)
             else:
+                if not len(entry['x_pos_signal']):
+                    continue
                 ax.scatter(entry['x_pos'], entry['y_pos'],
                             s=[path_dot_size if not draw_speed else (entry['speed']/np.percentile(entry['speed'],95))/speed_scaler],
                             c=[[.75,.75,.75]],
@@ -1201,20 +1212,20 @@ class dj_plotter():
                 assert (np.array([draw_hd, draw_time]) == True).all() == False, 'Draw time and hd are both true - choose one'
 
                 if draw_hd:
-                    colors_spikes = make_circular_colormap(entry['head_angle_signal'], cmap=cmap)
+                    colors_events = make_circular_colormap(entry['head_angle_signal'], cmap=cmap)
                 elif draw_time:
                     indices_signal = get_signal_indices(entry['x_pos_signal'], entry['x_pos'])
-                    colors_spikes  = make_linear_colormap(indices_signal, \
+                    colors_events  = make_linear_colormap(indices_signal, \
                                         reference_numbers=np.arange(len(entry['x_pos'])), cmap=cmap) 
                 else:
-                    colors_spikes = [[spike_color] if isinstance(spike_color,list) else spike_color][0]
+                    colors_events = [[event_color] if isinstance(event_color,list) else event_color][0]
                 # Draw signal ...
-                scaled_signal = (entry['signal']/np.percentile(entry['signal'],95))*spike_scaler
+                scaled_signal = (entry['signal']/np.percentile(entry['signal'],95))*event_scaler
                 ax.scatter(entry['x_pos_signal'], entry['y_pos_signal'], 
                                 s=scaled_signal, 
-                                c=colors_spikes, 
+                                c=colors_events, 
                                 lw=0,
-                                alpha=alpha_spikes)
+                                alpha=alpha_events)
 
             ax.set_aspect('equal')
             ax.autoscale(enable=True, tight=True)
@@ -1222,7 +1233,7 @@ class dj_plotter():
 
             ax.get_xaxis().set_ticks([]);ax.get_yaxis().set_ticks([])    
             if display_title:
-                title = self.__title(entry, display_score, hash_or_animal, show_cell=draw_spikes)
+                title = self.__title(entry, display_score, hash_or_animal, show_cell=draw_events)
                 ax.set_title(title)
 
             sns.despine(left=True, bottom=True)       
@@ -1232,15 +1243,15 @@ class dj_plotter():
                     print('Saving figure under {}'.format(str(self.save_path)))
                     if plot_counter < 2:
                         # Show the actual cell ids in export path 
-                        if not draw_spikes:
-                            export_name = f'path {key["session_name"]}.{self.save_format}'
+                        if not draw_events:
+                            export_name = f'path {key["recording_name"]}.{self.save_format}'
                         else: 
-                            export_name = f'pathspike {key["session_name"]} cell {key["cell_id"]}.{self.save_format}'
+                            export_name = f'pathevent {key["recording_name"]} cell {key["cell_id"]}.{self.save_format}'
                     else:
-                        if not draw_spikes:
+                        if not draw_events:
                             export_name = f'path n={plot_counter}.{self.save_format}'
                         else: 
-                            export_name = f'pathspike n={plot_counter}.{self.save_format}'
+                            export_name = f'pathevent n={plot_counter}.{self.save_format}'
                     figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
                 else: 
                     plt.show()
@@ -1254,12 +1265,12 @@ class dj_plotter():
         return
 
 
-    def path_spike_ov(self, **kwargs):
+    def path_event_ov(self, **kwargs):
         ''' 
         SPECIAL! 
         - This function gets data for each session 
 
-        Plot path-spike plots for object vector (ov) cells (1x3):
+        Plot path-event plots for object vector (ov) cells (1x3):
              - base_session
              - object1_session
              - object2_session 
@@ -1280,24 +1291,24 @@ class dj_plotter():
                             Name of the score (=column name) to display in title 
                             of each subplot.
                             Defaults to None.
-            draw_spikes   : bool
-                            Show spikes? 
+            draw_events   : bool
+                            Show events? 
             draw_speed    : bool
                             Encode speed in size of dots in path plot? 
             path_dot_size : int (float)
                             If draw_speed==False: Dot size for tracking
             draw_hd       : bool
                             Encode angle in color of dots in plot?
-                            If draw_spikes==False this will color the path plot
-                            If draw_spikes==True this will color the spikes
+                            If draw_events==False this will color the path plot
+                            If draw_events==True this will color the events
             speed_scaler  : float
                             How much smaller than actual speed should dot size be?
-            spike_scaler  : float
-                            How much smaller than actual spike size should the dot be?
-            spike_color   : list/string
-                            Valid color for spikes; defaults to 'k'
+            event_scaler  : float
+                            How much smaller than actual event size should the dot be?
+            event_color   : list/string
+                            Valid color for events; defaults to 'k'
             alpha_path    : float
-            alpha_spikes  : float
+            alpha_events  : float
             display_title : bool 
                             Show title? 
 
@@ -1308,36 +1319,36 @@ class dj_plotter():
         cmap           = plt.get_cmap(cmap)
         display_score  = kwargs.get('display_score', None)
         hash_or_animal = kwargs.get('hash_or_animal', 'animal')
-        draw_spikes    = kwargs.get('draw_spikes',True)
+        draw_events    = kwargs.get('draw_events',True)
         draw_speed     = kwargs.get('draw_speed', False)
         path_dot_size  = kwargs.get('path_dot_size', 1.2)
         draw_hd        = kwargs.get('draw_hd', False)
         speed_scaler   = kwargs.get('speed_scaler', .5)
-        spike_scaler   = kwargs.get('spike_scaler', 80)
-        spike_color    = kwargs.get('spike_color','k')
+        event_scaler   = kwargs.get('event_scaler', 80)
+        event_color    = kwargs.get('event_color','k')
         alpha_path     = kwargs.get('alpha_path', 1)
-        alpha_spikes   = kwargs.get('alpha_spikes', .7)
+        alpha_events   = kwargs.get('alpha_events', .7)
         display_title  = kwargs.get('display_title', True)
 
 
-        ATTR_PATHSPIKE_OV = self.ATTR_PATHSPIKE_OV.copy()
+        ATTR_PATHEVENT_OV = self.ATTR_PATHEVENT_OV.copy()
         # Display session hash or animal_name/timestamp? 
         if hash_or_animal == 'hash':
-            ATTR_PATHSPIKE_OV.append(self.SESSION_HASH_OV)    
+            ATTR_PATHEVENT_OV.append(self.RECORDING_HASH_OV)    
         elif hash_or_animal == 'animal':
-            ATTR_PATHSPIKE_OV.append(self.ANIMAL_NAME)
-            ATTR_PATHSPIKE_OV.append(self.TIMESTAMP)    
+            ATTR_PATHEVENT_OV.append(self.ANIMAL_NAME)
+            ATTR_PATHEVENT_OV.append(self.TIMESTAMP)    
         else:
             raise NameError(f'Keyword "{hash_or_animal}" not recognized')
         # Display a score?
         if display_score is not None and isinstance(display_score, str):
-            ATTR_PATHSPIKE_OV.append(display_score)
+            ATTR_PATHEVENT_OV.append(display_score)
         else:
             display_score = None
 
         # Check attributes in datajoint join 
-        if not self.__check_join_integrity(ATTR_PATHSPIKE_OV): 
-            raise KeyError('One or more of these were not found: {}'.format(ATTR_PATHSPIKE_OV))
+        if not self.__check_join_integrity(ATTR_PATHEVENT_OV): 
+            raise KeyError('One or more of these were not found: {}'.format(ATTR_PATHEVENT_OV))
        
 
         ###########################################################################
@@ -1357,7 +1368,7 @@ class dj_plotter():
             total = len(iterator)
         
         # Make loop with tqdm progress bar
-        tqdm_iterator = self.__tqdm_iterator(iterator, total-1, 'Drawing path-spike plots')
+        tqdm_iterator = self.__tqdm_iterator(iterator, total-1, 'Drawing path-event plots')
         
         for no, key in tqdm_iterator:    
             
@@ -1375,10 +1386,10 @@ class dj_plotter():
                 entry = key 
             
             # Get session dictionary object vector 
-            session_dict         = make_multi_session_object_dict(entry)
-            session_dict         = _get_ovc_tracking_signal(session_dict, entry) # Returns tracking and signal
+            recording_dict         = make_multi_recording_object_dict(entry)
+            recording_dict         = _get_ovc_tracking_signal(recording_dict, entry) # Returns tracking and signal
 
-            if session_dict['object1']['session_name'] == session_dict['object2']['session_name']:
+            if recording_dict['object1']['recording_name'] == recording_dict['object2']['recording_name']:
                 two_object_sess = True # This is a "special case" -> 2 objects in one session 
                 figure = self.__create_figure_grid_ov_2
                 ax_base    = figure.add_subplot(1,2,1)
@@ -1397,36 +1408,36 @@ class dj_plotter():
 
 
             # Get subplot title
-            title = self.__title(entry, display_score, hash_or_animal, show_cell=draw_spikes, ov=True)
+            title = self.__title(entry, display_score, hash_or_animal, show_cell=draw_events, ov=True)
 
             for ax, session in zip(axes, sessions):
-                if not draw_spikes:  
-                    ax.scatter(session_dict[session]['tracking']['x_pos'],
-                               session_dict[session]['tracking']['y_pos'],
+                if not draw_events:  
+                    ax.scatter(recording_dict[session]['tracking']['x_pos'],
+                               recording_dict[session]['tracking']['y_pos'],
                                 s=[path_dot_size if not draw_speed else \
-                                    (session_dict[session]['tracking']['speed']/np.percentile(session_dict[session]['tracking']['speed'],95))/speed_scaler],
-                                c=[[[.2,.2,.2]] if not draw_hd else make_circular_colormap(session_dict[session]['tracking']['head_angle'], cmap=cmap)][0],
+                                    (recording_dict[session]['tracking']['speed']/np.percentile(recording_dict[session]['tracking']['speed'],95))/speed_scaler],
+                                c=[[[.2,.2,.2]] if not draw_hd else make_circular_colormap(recording_dict[session]['tracking']['head_angle'], cmap=cmap)][0],
                                 lw=0,
                                 alpha=alpha_path)
                 else:
-                    ax.scatter(session_dict[session]['tracking']['x_pos'], 
-                               session_dict[session]['tracking']['y_pos'],
-                                s=[path_dot_size if not draw_speed else (session_dict[session]['tracking']['speed']/np.percentile(session_dict[session]['tracking']['speed'],95))/speed_scaler],
+                    ax.scatter(recording_dict[session]['tracking']['x_pos'], 
+                               recording_dict[session]['tracking']['y_pos'],
+                                s=[path_dot_size if not draw_speed else (recording_dict[session]['tracking']['speed']/np.percentile(recording_dict[session]['tracking']['speed'],95))/speed_scaler],
                                 c=[[.75,.75,.75]],
                                 lw=0,
                                 alpha=alpha_path)
 
                     if draw_hd:
-                        colors_spikes = make_circular_colormap(session_dict[session]['signal']['head_angle_signal'])
+                        colors_events = make_circular_colormap(recording_dict[session]['signal']['head_angle_signal'])
                     else:
-                        colors_spikes = [[spike_color] if isinstance(spike_color,list) else spike_color][0]
+                        colors_events = [[event_color] if isinstance(event_color,list) else event_color][0]
                     # Draw signal ...
-                    scaled_signal = (session_dict[session]['signal']['signal']/np.percentile(session_dict[session]['signal']['signal'],95))*spike_scaler
-                    ax.scatter(session_dict[session]['signal']['x_pos_signal'], session_dict[session]['signal']['y_pos_signal'], 
+                    scaled_signal = (recording_dict[session]['signal']['signal']/np.percentile(recording_dict[session]['signal']['signal'],95))*event_scaler
+                    ax.scatter(recording_dict[session]['signal']['x_pos_signal'], recording_dict[session]['signal']['y_pos_signal'], 
                                     s=scaled_signal, 
-                                    c=colors_spikes, 
+                                    c=colors_events, 
                                     lw=0,
-                                    alpha=alpha_spikes)
+                                    alpha=alpha_events)
 
                 ax.set_aspect('equal')
                 ax.autoscale(enable=True, tight=True)
@@ -1444,7 +1455,7 @@ class dj_plotter():
             plt.tight_layout()    
             if self.save_path is not None: 
                 print('Saving figure under {}'.format(str(self.save_path)))
-                export_name = f'pathspike ov {key["base_session"]} cell {key["cell_id"]}.{self.save_format}'
+                export_name = f'pathevent ov {key["base_session"]} cell {key["cell_id"]}.{self.save_format}'
                 figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
             else:
                 plt.show()   
@@ -1548,10 +1559,10 @@ class dj_plotter():
             colors         = kwargs.get('colors', None)
             scalebar       = kwargs.get('scalebar', None)
             return_axes    = kwargs.get('return_axes',False)
-            return_figure  = kwargs.get('return_figure',False)
+            return_figure   = kwargs.get('return_figure',False)
             display_title  = kwargs.get('display_title', True)
             ax             = kwargs.get('ax', None)
-            path_suffix    = kwargs.get('path_suffix', '')
+            path_suffix     = kwargs.get('path_suffix', '')
             despine        = kwargs.get('despine', True)
 
             # Sanity checks
@@ -1600,7 +1611,7 @@ class dj_plotter():
 
             # Display session hash or animal_name/timestamp? 
             if hash_or_animal == 'hash':
-                ATTR_ROIS.append(self.SESSION_HASH)
+                ATTR_ROIS.append(self.RECORDING_HASH)
             elif hash_or_animal == 'animal':
                 ATTR_ROIS.append(self.ANIMAL_NAME)
                 ATTR_ROIS.append(self.TIMESTAMP)    
@@ -1754,101 +1765,101 @@ class dj_plotter():
 ### HELPERS 
 
 
-def _get_ovc_ratemaps(session_dict, key):
+def _get_ovc_tuningmaps(recording_dict, key):
     '''
-    Helper for ratemaps_ov
-    - Fetch ratemaps
-    - Object position in ratemap coordinates 
+    Helper for tuningmaps_ov
+    - Fetch tuningmaps
+    - Object position in tuningmap coordinates 
 
     '''
     fill_value = 0 # or np.nan
     
-    for key_ in ['dataset_name', 'session_order','signal_dataset','tracking_dataset']:
+    for key_ in ['dataset_name', 'recording_order','signal_dataset','tracking_dataset']:
         try:
             _ = key.pop(key_)
         except KeyError:
             pass
         
-    rm, mask = (Ratemap & session_dict['base'] & key).fetch1('ratemap','mask_rm')
-    ratemap = np.ma.array(rm, mask=mask).filled(fill_value=fill_value)
-    session_dict['base']['ratemap'] = ratemap 
+    rm, mask = (Ratemap & recording_dict['base'] & key).fetch1('tuningmap','mask_tm')
+    tuningmap = np.ma.array(rm, mask=mask).filled(fill_value=fill_value)
+    recording_dict['base']['tuningmap'] = tuningmap 
     
     for session in ['object1', 'object2']:
-        # Get fields and object position (in ratemap coordinates)
-        rm, mask = (Ratemap & session_dict[session] & key).fetch1('ratemap','mask_rm')
-        ratemap = np.ma.array(rm, mask=mask).filled(fill_value=fill_value)
+        # Get fields and object position (in tuningmap coordinates)
+        rm, mask = (Ratemap & recording_dict[session] & key).fetch1('tuningmap','mask_tm')
+        tuningmap = np.ma.array(rm, mask=mask).filled(fill_value=fill_value)
         
         # Take care of objects / positions 
         try:
-            obj_x, obj_y     = (ArenaObjectPos & session_dict[session] & key).fetch1('obj_x_coord_calib','obj_y_coord_calib')
+            obj_x, obj_y     = (ArenaObjectPos & recording_dict[session] & key).fetch1('obj_x_coord_calib','obj_y_coord_calib')
         except dj.DataJointError:
-            obj = (ArenaObjectPos & session_dict[session] & key).fetch('obj_x_coord_calib','obj_y_coord_calib', as_dict=True)
+            obj = (ArenaObjectPos & recording_dict[session] & key).fetch('obj_x_coord_calib','obj_y_coord_calib', as_dict=True)
             if session == 'object1':
                 obj_x, obj_y = obj[0]['obj_x_coord_calib'], obj[0]['obj_y_coord_calib']
             else:
                 obj_x, obj_y = obj[1]['obj_x_coord_calib'], obj[1]['obj_y_coord_calib']
             
-        x_edges, y_edges = (Occupancy & session_dict[session] & key).fetch1('x_edges','y_edges')
+        x_edges, y_edges = (Occupancy & recording_dict[session] & key).fetch1('x_edges','y_edges')
 
-        # ... Where is the object in ratemap "coordinates" (bins)
+        # ... Where is the object in tuningmap "coordinates" (bins)
         bin_size_rm_x = np.mean(np.diff(x_edges))
         bin_size_rm_y = np.mean(np.diff(y_edges))
 
         obj_x_rm = ((obj_x - x_edges[0]) / bin_size_rm_x) - .5
         obj_y_rm = ((obj_y - y_edges[0]) / bin_size_rm_y) - .5
 
-        session_dict[session]['ratemap']     = ratemap 
-        session_dict[session]['object_x']    = obj_x
-        session_dict[session]['object_y']    = obj_y
-        session_dict[session]['object_x_rm'] = obj_x_rm
-        session_dict[session]['object_y_rm'] = obj_y_rm
+        recording_dict[session]['tuningmap']     = tuningmap 
+        recording_dict[session]['object_x']    = obj_x
+        recording_dict[session]['object_y']    = obj_y
+        recording_dict[session]['object_x_rm'] = obj_x_rm
+        recording_dict[session]['object_y_rm'] = obj_y_rm
     
     max_rm = []
     for session in ['base','object1','object2']:
-        max_rm_ = np.nanpercentile(session_dict[session]['ratemap'],99)
+        max_rm_ = np.nanpercentile(recording_dict[session]['tuningmap'],99)
         max_rm.append(max_rm_)
     
-    return session_dict, np.nanmax(max_rm)
+    return recording_dict, np.nanmax(max_rm)
 
-def _get_ovc_tracking_signal(session_dict, key):
+def _get_ovc_tracking_signal(recording_dict, key):
     '''
-    Helper for path_spike_ov
+    Helper for path_event_ov
     - Fetch tracking and signal 
     - Object positions
     '''
     
-    for key_ in ['dataset_name', 'session_order','signal_dataset','tracking_dataset']:
+    for key_ in ['dataset_name', 'recording_order','signal_dataset','tracking_dataset']:
         try:
             _ = key.pop(key_)
         except KeyError:
             pass
         
-    tracking = (Tracking.OpenField & session_dict['base'] & key).fetch1()
-    signal   = (SignalTracking & session_dict['base'] & key).fetch1()
-    session_dict['base']['tracking'] = tracking 
-    session_dict['base']['signal']   = signal 
+    tracking = (Tracking.OpenField & recording_dict['base'] & key).fetch1()
+    signal   = (SignalTracking & recording_dict['base'] & key).fetch1()
+    recording_dict['base']['tracking'] = tracking 
+    recording_dict['base']['signal']   = signal 
 
     for session in ['object1', 'object2']:
-        # Get fields and object position (in ratemap coordinates)
-        tracking = (Tracking.OpenField & session_dict[session] & key).fetch1()
-        signal   = (SignalTracking & session_dict[session] & key).fetch1()
-        session_dict[session]['tracking'] = tracking 
-        session_dict[session]['signal']   = signal 
+        # Get fields and object position (in tuningmap coordinates)
+        tracking = (Tracking.OpenField & recording_dict[session] & key).fetch1()
+        signal   = (SignalTracking & recording_dict[session] & key).fetch1()
+        recording_dict[session]['tracking'] = tracking 
+        recording_dict[session]['signal']   = signal 
 
         # Take care of objects / positions 
         try:
-            obj_x, obj_y     = (ArenaObjectPos & session_dict[session] & key).fetch1('obj_x_coord_calib','obj_y_coord_calib')
+            obj_x, obj_y     = (ArenaObjectPos & recording_dict[session] & key).fetch1('obj_x_coord_calib','obj_y_coord_calib')
         except dj.DataJointError:
-            obj = (ArenaObjectPos & session_dict[session] & key).fetch('obj_x_coord_calib','obj_y_coord_calib', as_dict=True)
+            obj = (ArenaObjectPos & recording_dict[session] & key).fetch('obj_x_coord_calib','obj_y_coord_calib', as_dict=True)
             if session == 'object1':
                 obj_x, obj_y = obj[0]['obj_x_coord_calib'], obj[0]['obj_y_coord_calib']
             else:
                 obj_x, obj_y = obj[1]['obj_x_coord_calib'], obj[1]['obj_y_coord_calib']
 
-        session_dict[session]['object_x']    = obj_x
-        session_dict[session]['object_y']    = obj_y
+        recording_dict[session]['object_x']    = obj_x
+        recording_dict[session]['object_y']    = obj_y
 
-    return session_dict
+    return recording_dict
 
 def draw_vector_map(masked_histogram, radial_bins_hist, angular_bins_hist):
     '''
