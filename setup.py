@@ -13,7 +13,7 @@ long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 setup(
     name='djplotter', 
-    version='0.1.1',  
+    version='0.1.2',  
     description='Plotter for the datajoint imaging pipeline', 
     long_description=long_description,  
     long_description_content_type='text/markdown',  
