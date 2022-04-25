@@ -20,11 +20,14 @@ from skimage.filters import gaussian
 from .helpers.plotting_helpers import make_circular_colormap, make_linear_colormap
 from .helpers.dj_utils import make_multi_recording_object_dict, get_signal_indices
 
+# Stylesheets
+# Imports default styles and style dictionary
+from .helpers.stylesheet import *
+
 # Additional matplotlib options
 import matplotlib as mpl
 mpl.rcParams['pdf.fonttype'] = 42 # Fix bug in PDF export
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-
 # Load base schema
 import datajoint as dj 
 schema = dj.schema(dj.config['dj_imaging.database'])
@@ -80,6 +83,10 @@ class dj_plotter():
             save_format     : string
                               'pdf', 'png', ...
                               Default: 'pdf'
+            style           : string
+                              'dark_background', 'default'
+                              Check plt.style.available for all possible options 
+                              Default: 'default'
 
         '''
         
@@ -102,7 +109,11 @@ class dj_plotter():
 
         self.save_format = kwargs.get('save_format', 'pdf')
         assert  self.save_format in ['pdf','png','jpg'], f'Format "{self.save_format}" not recognized'
-                   
+
+        self.style = kwargs.get('style', 'default')
+        if self.style != 'default':
+            assert self.style in plt.style.available, f'Plotting style "{self.style}" does not exist.\nPossible options:\n{plt.style.available}'
+
     def __repr__(self):
         return f'DJ plotter class\nAvailable attributes:\n{self.__attributes}'
 
@@ -137,25 +148,29 @@ class dj_plotter():
     @property
     def __create_figure_single(self):
         ''' Create standard figure''' 
-        sns.set(style='white',font_scale=self.font_scale)
+        sns.set(font_scale=self.font_scale)
+        plt.style.use(self.style)
         return plt.figure(figsize=(10,10))
 
     @property
     def __create_figure_grid(self):
         ''' Create standard figure for grid display of subplots ''' 
-        sns.set(style='white',font_scale=self.font_scale)
+        sns.set(font_scale=self.font_scale)
+        plt.style.use(self.style)
         return plt.figure(figsize=(20,20))
     
     @property
     def __create_figure_grid_ov_2(self):
         ''' Create standard (object vector) figure for grid display of 2 subplots ''' 
-        sns.set(style='white',font_scale=self.font_scale)
+        sns.set(font_scale=self.font_scale)
+        plt.style.use(self.style)
         return plt.figure(figsize=(6,3))
     
     @property
     def __create_figure_grid_ov_3(self):
         ''' Create standard (object vector) figure for grid display of 3 subplots ''' 
-        sns.set(style='white',font_scale=self.font_scale)
+        sns.set(font_scale=self.font_scale)
+        plt.style.use(self.style)
         return plt.figure(figsize=(9,3))
 
     def __title(self, entry, display_score, hash_or_animal, show_cell=True, ov=False):
@@ -328,6 +343,15 @@ class dj_plotter():
             if not external_axis: 
                 ax = figure.add_subplot(5,5,plot_counter)
 
+            # Check for custom styling 
+            if self.style in styles: 
+                cc_color   = styles[self.style].get('cue_card_color_tuningmap', CUE_CARD_COLOR_TM)
+                axes_color = styles[self.style].get('axes_color_tuningmap', AXES_COLOR_TM)
+
+            else:
+                cc_color   = CUE_CARD_COLOR_TM
+                axes_color = AXES_COLOR_TM
+
             ax.imshow(tuningmap, cmap=cmap, vmin=np.nanmin(tuningmap), vmax=np.nanpercentile(tuningmap,99))
             ax.set_aspect('equal')
             ax.get_xaxis().set_ticks([]);ax.get_yaxis().set_ticks([])    
@@ -338,21 +362,22 @@ class dj_plotter():
             
             for axis in ['top','bottom','left','right']:
                 ax.spines[axis].set_linewidth(axes_lw)
+                ax.spines[axis].set_color(axes_color)
             
-            # Draw cue card?
+            # Draw cue card?               
             if cue_card_pos is not None: 
                 size = tuningmap.shape
                 card_pos = cue_card_pos[no]
                 if card_pos == 'west':
-                    ax.plot([0.,0.],[size[0]/2-5,size[0]/2+5], lw=5, color='white', clip_on=False, zorder=10, solid_capstyle='butt')
+                    ax.plot([0.,0.],[size[0]/2-5,size[0]/2+5], lw=5, color=cc_color, clip_on=False, zorder=10, solid_capstyle='butt')
                 elif card_pos == 'east':
-                    ax.plot([size[1]-1,size[1]-1],[size[0]/2-5,size[0]/2+5], lw=5, color='white', clip_on=False, zorder=10, solid_capstyle='butt')
+                    ax.plot([size[1]-1,size[1]-1],[size[0]/2-5,size[0]/2+5], lw=5, color=cc_color, clip_on=False, zorder=10, solid_capstyle='butt')
                 elif card_pos == 'north':
-                    ax.plot([size[1]/2-5,size[1]/2+5],[0,0], lw=5, color='white', clip_on=False, zorder=10, solid_capstyle='butt')
+                    ax.plot([size[1]/2-5,size[1]/2+5],[0,0], lw=5, color=cc_color, clip_on=False, zorder=10, solid_capstyle='butt')
                 elif card_pos == 'south':
-                    ax.plot([size[1]/2-5,size[1]/2+5],[size[0]-1,size[0]-1], lw=5, color='white', clip_on=False, zorder=10, solid_capstyle='butt')
+                    ax.plot([size[1]/2-5,size[1]/2+5],[size[0]-1,size[0]-1], lw=5, color=cc_color, clip_on=False, zorder=10, solid_capstyle='butt')
                 else: 
-                    raise NotImplementedError(f'Card position {card_pos} not understood. Choose ["west","east","north","south"]')
+                    raise NotImplementedError(f'Card position {card_pos} not understood. Choose ["west", "east", "north", "south"]')
 
             if plot_counter >= self.plots_per_view:
                 if (self.save_path is not None) and not external_axis: 
@@ -493,6 +518,12 @@ class dj_plotter():
             else:
                 entry = key 
         
+            # Check for custom styling 
+            if self.style in styles: 
+                axes_color = styles[self.style].get('axes_color_autocorr', AXES_COLOR_ACORR)
+            else: 
+                axes_color = AXES_COLOR_ACORR
+
             plot_counter += 1 
             if not external_axis: 
                 ax = figure.add_subplot(5,5,plot_counter)
@@ -506,6 +537,7 @@ class dj_plotter():
             
             for axis in ['top','bottom','left','right']:
                 ax.spines[axis].set_linewidth(axes_lw)
+                ax.spines[axis].set_color(AXES_COLOR_ACORR)
 
             
             if plot_counter >= self.plots_per_view:
@@ -662,17 +694,33 @@ class dj_plotter():
             else: 
                 assert 'theta_direction' in ax.properties(), 'Given axis is not polar. Make sure you initialize with "projection=polar"'
 
+            # Check for custom styling 
+            if self.style in styles: 
+                color_line_hd     = styles[self.style].get('color_line_hd', COLOR_LINE_HD)
+                color_line_hd_occ = styles[self.style].get('color_line_hd_occ', COLOR_LINE_HD_OCC)
+            else: 
+                color_line_hd     = COLOR_LINE_HD
+                color_line_hd_occ = COLOR_LINE_HD_OCC
+
             # Color? 
+            # This partially overwrites the stylesheet selection above 
             if color_hd:
-                color_line = make_circular_colormap(np.array([entry['angular_mean']]), cmap=cmap)[0]
-                line_width_ = line_width * 1.5 # Otherwise difficult to see
+                color_line_hd = make_circular_colormap(np.array([entry['angular_mean']]), cmap=cmap)[0]
+                line_width_ = line_width * 1.5 # Otherwise difficult to see the color
             else:
                 line_width_ = line_width
-                color_line = 'k'
 
-            ax.plot(entry['angle_centers'], entry['angular_occupancy']/np.nanmax(entry['angular_occupancy']), \
-                                        color='k', alpha=[1. if only_occupancy else .4][0], lw=line_width_)
-            ax.plot(entry['angle_centers'], entry['angular_tuning']/np.nanmax(entry['angular_tuning']), color=color_line, lw=line_width_, alpha=.85)
+            ax.plot(entry['angle_centers'], 
+                    entry['angular_occupancy']/np.nanmax(entry['angular_occupancy']), 
+                    color=color_line_hd_occ, 
+                    alpha=[1. if only_occupancy else .4][0], 
+                    lw=line_width_)
+            ax.plot(entry['angle_centers'], 
+                    entry['angular_tuning']/np.nanmax(entry['angular_tuning']), 
+                    color=color_line_hd, 
+                    lw=line_width_, 
+                    alpha=.85)
+            
             if only_occupancy:
                 del ax.lines[1] # Get rid of second drawn line, i.e. the actual tuning curve. This keeps the y axis scaling intact.
             
@@ -885,37 +933,49 @@ class dj_plotter():
                 ax_object2.set_aspect('equal')
                 ax_object2.get_xaxis().set_ticks([]); ax_object2.get_yaxis().set_ticks([])    
 
+            # Check for custom styling 
+            if self.style in styles: 
+                cc_color   = styles[self.style].get('cue_card_color_tuningmap', CUE_CARD_COLOR_TM)
+                axes_color = styles[self.style].get('axes_color_tuningmap', AXES_COLOR_TM)
+
+            else:
+                cc_color   = CUE_CARD_COLOR_TM
+                axes_color = AXES_COLOR_TM
+
+
             # Axes linewidth 
             for axis in ['top','bottom','left','right']:
                 ax_base.spines[axis].set_linewidth(axes_lw)
                 ax_object1.spines[axis].set_linewidth(axes_lw)
+                ax_object1.spines[axis].set_color(axes_color)
                 if not two_object_sess:
                     ax_object2.spines[axis].set_linewidth(axes_lw)
+                    ax_object2.spines[axis].set_color(axes_color)
 
             # Draw cue card?
             if cue_card_pos is not None: 
                 size = recording_dict['base']['tuningmap'].shape # Just take one of them for now - should be fine
                 card_pos = cue_card_pos[no]
                 if card_pos == 'west':
-                    ax_base.plot([0.,0.],[size[0]/2-5,size[0]/2+5], lw=3.5, color='white', clip_on=False, zorder=10, solid_capstyle='butt')
-                    ax_object1.plot([0.,0.],[size[0]/2-5,size[0]/2+5], lw=3.5, color='white', clip_on=False, zorder=10, solid_capstyle='butt')
+                    ax_base.plot([0.,0.],[size[0]/2-5,size[0]/2+5], lw=3.5, color=cc_color, clip_on=False, zorder=10, solid_capstyle='butt')
+                    ax_object1.plot([0.,0.],[size[0]/2-5,size[0]/2+5], lw=3.5, color=cc_color, clip_on=False, zorder=10, solid_capstyle='butt')
                     if not two_object_sess:
-                        ax_object2.plot([0.,0.],[size[0]/2-5,size[0]/2+5], lw=3.5, color='white', clip_on=False, zorder=10, solid_capstyle='butt')
+                        ax_object2.plot([0.,0.],[size[0]/2-5,size[0]/2+5], lw=3.5, color=cc_color, clip_on=False, zorder=10, solid_capstyle='butt')
                 elif card_pos == 'east':
-                    ax_base.plot([size[1]-1,size[1]-1],[size[0]/2-5,size[0]/2+5], lw=3.5, color='white', clip_on=False, zorder=10, solid_capstyle='butt')
-                    ax_object1.plot([size[1]-1,size[1]-1],[size[0]/2-5,size[0]/2+5], lw=3.5, color='white', clip_on=False, zorder=10, solid_capstyle='butt')
+                    ax_base.plot([size[1]-1,size[1]-1],[size[0]/2-5,size[0]/2+5], lw=3.5, color=cc_color, clip_on=False, zorder=10, solid_capstyle='butt')
+                    ax_object1.plot([size[1]-1,size[1]-1],[size[0]/2-5,size[0]/2+5], lw=3.5, color=cc_color, clip_on=False, zorder=10, solid_capstyle='butt')
                     if not two_object_sess:
-                        ax_object2.plot([size[1]-1,size[1]-1],[size[0]/2-5,size[0]/2+5], lw=3.5, color='white', clip_on=False, zorder=10, solid_capstyle='butt')
+                        ax_object2.plot([size[1]-1,size[1]-1],[size[0]/2-5,size[0]/2+5], lw=3.5, color=cc_color, clip_on=False, zorder=10, solid_capstyle='butt')
                 elif card_pos == 'north':
-                    ax_base.plot([size[1]/2-5,size[1]/2+5],[0,0], lw=3.5, color='white', clip_on=False, zorder=10, solid_capstyle='butt')
-                    ax_object1.plot([size[1]/2-5,size[1]/2+5],[0,0], lw=3.5, color='white', clip_on=False, zorder=10, solid_capstyle='butt')
+                    ax_base.plot([size[1]/2-5,size[1]/2+5],[0,0], lw=3.5, color=cc_color, clip_on=False, zorder=10, solid_capstyle='butt')
+                    ax_object1.plot([size[1]/2-5,size[1]/2+5],[0,0], lw=3.5, color=cc_color, clip_on=False, zorder=10, solid_capstyle='butt')
                     if not two_object_sess:
-                        ax_object2.plot([size[1]/2-5,size[1]/2+5],[0,0], lw=3.5, color='white', clip_on=False, zorder=10, solid_capstyle='butt')
+                        ax_object2.plot([size[1]/2-5,size[1]/2+5],[0,0], lw=3.5, color=cc_color, clip_on=False, zorder=10, solid_capstyle='butt')
                 elif card_pos == 'south':
-                    ax_base.plot([size[1]/2-5,size[1]/2+5],[size[0]-1,size[0]-1], lw=3.5, color='white', clip_on=False, zorder=10, solid_capstyle='butt')
-                    ax_object1.plot([size[1]/2-5,size[1]/2+5],[size[0]-1,size[0]-1], lw=3.5, color='white', clip_on=False, zorder=10, solid_capstyle='butt')
+                    ax_base.plot([size[1]/2-5,size[1]/2+5],[size[0]-1,size[0]-1], lw=3.5, color=cc_color, clip_on=False, zorder=10, solid_capstyle='butt')
+                    ax_object1.plot([size[1]/2-5,size[1]/2+5],[size[0]-1,size[0]-1], lw=3.5, color=cc_color, clip_on=False, zorder=10, solid_capstyle='butt')
                     if not two_object_sess:
-                        ax_object2.plot([size[1]/2-5,size[1]/2+5],[size[0]-1,size[0]-1], lw=3.5, color='white', clip_on=False, zorder=10, solid_capstyle='butt')
+                        ax_object2.plot([size[1]/2-5,size[1]/2+5],[size[0]-1,size[0]-1], lw=3.5, color=cc_color, clip_on=False, zorder=10, solid_capstyle='butt')
                 else: 
                     raise NotImplementedError(f'Card position {card_pos} not understood. Choose ["west","east","north","south"]')
 
@@ -1090,7 +1150,7 @@ class dj_plotter():
         draw_hd        = kwargs.get('draw_hd', False)
         speed_scaler   = kwargs.get('speed_scaler', .5)
         event_scaler   = kwargs.get('event_scaler', 80)
-        event_color    = kwargs.get('event_color','k')
+        event_color    = kwargs.get('event_color', EVENT)
         alpha_path     = kwargs.get('alpha_path', 1)
         alpha_events   = kwargs.get('alpha_events', .7)
         display_title  = kwargs.get('display_title', True)
@@ -1193,11 +1253,24 @@ class dj_plotter():
             plot_counter +=1
             if not external_axis: 
                 ax = figure.add_subplot(5,5,plot_counter)
-            if not draw_events:  
 
+
+            # Check for custom styling 
+            if self.style in styles: 
+                path_color          = styles[self.style].get('path_color', PATH)
+                path_event_color    = styles[self.style].get('path_event_color', PATH_EVENT)
+                path_event_hd_color = styles[self.style].get('path_event_hd_color', PATH_EVENT_HD)
+                event_color         = styles[self.style].get('event_color', EVENT)
+            else:
+                path_color          = PATH
+                path_event_color    = PATH_EVENT
+                path_event_hd_color = PATH_EVENT_HD
+                event_color         = EVENT   
+
+            if not draw_events:  
                 ax.scatter(entry['x_pos'], entry['y_pos'],
                             s=[path_dot_size if not draw_speed else (entry['speed']/np.percentile(entry['speed'],95))/speed_scaler],
-                            c=[[[.2,.2,.2]] if not any([draw_angle, draw_hd]) else make_circular_colormap(entry['head_angle'],cmap=cmap)][0],
+                            c=[[path_color] if not any([draw_angle, draw_hd]) else make_circular_colormap(entry['head_angle'], cmap=cmap)][0],
                             lw=0,
                             alpha=alpha_path)
             else:
@@ -1205,27 +1278,31 @@ class dj_plotter():
                     continue
                 ax.scatter(entry['x_pos'], entry['y_pos'],
                             s=[path_dot_size if not draw_speed else (entry['speed']/np.percentile(entry['speed'],95))/speed_scaler],
-                            c=[[.75,.75,.75]],
+                            c=[path_event_color if not draw_hd else path_event_hd_color][0],
                             lw=0,
                             alpha=alpha_path)
 
                 assert (np.array([draw_hd, draw_time]) == True).all() == False, 'Draw time and hd are both true - choose one'
 
                 if draw_hd:
-                    colors_events = make_circular_colormap(entry['head_angle_signal'], cmap=cmap)
+                    colors_events = make_circular_colormap(entry['head_angle_signal'], 
+                                                           cmap=cmap)
                 elif draw_time:
-                    indices_signal = get_signal_indices(entry['x_pos_signal'], entry['x_pos'])
-                    colors_events  = make_linear_colormap(indices_signal, \
-                                        reference_numbers=np.arange(len(entry['x_pos'])), cmap=cmap) 
+                    indices_signal = get_signal_indices(entry['x_pos_signal'], 
+                                                        entry['x_pos'])
+                    colors_events  = make_linear_colormap(indices_signal, 
+                                                          reference_numbers=np.arange(len(entry['x_pos'])), 
+                                                          cmap=cmap) 
                 else:
                     colors_events = [[event_color] if isinstance(event_color,list) else event_color][0]
                 # Draw signal ...
                 scaled_signal = (entry['signal']/np.percentile(entry['signal'],95))*event_scaler
-                ax.scatter(entry['x_pos_signal'], entry['y_pos_signal'], 
-                                s=scaled_signal, 
-                                c=colors_events, 
-                                lw=0,
-                                alpha=alpha_events)
+                ax.scatter(entry['x_pos_signal'], 
+                           entry['y_pos_signal'], 
+                           s=scaled_signal, 
+                           c=colors_events, 
+                           lw=0,
+                           alpha=alpha_events)
 
             ax.set_aspect('equal')
             ax.autoscale(enable=True, tight=True)
@@ -1325,7 +1402,7 @@ class dj_plotter():
         draw_hd        = kwargs.get('draw_hd', False)
         speed_scaler   = kwargs.get('speed_scaler', .5)
         event_scaler   = kwargs.get('event_scaler', 80)
-        event_color    = kwargs.get('event_color','k')
+        event_color    = kwargs.get('event_color',EVENT)
         alpha_path     = kwargs.get('alpha_path', 1)
         alpha_events   = kwargs.get('alpha_events', .7)
         display_title  = kwargs.get('display_title', True)
@@ -1407,23 +1484,35 @@ class dj_plotter():
                 sessions = ['base', 'object1', 'object2']
 
 
+            # Check for custom styling 
+            if self.style in styles: 
+                path_color          = styles[self.style].get('path_color', PATH)
+                path_event_color    = styles[self.style].get('path_event_color', PATH_EVENT)
+                path_event_hd_color = styles[self.style].get('path_event_hd_color', PATH_EVENT_HD)
+                event_color         = styles[self.style].get('event_color', EVENT)
+            else:
+                path_color          = PATH
+                path_event_color    = PATH_EVENT
+                path_event_hd_color = PATH_EVENT_HD
+                event_color         = EVENT   
+
+
             # Get subplot title
             title = self.__title(entry, display_score, hash_or_animal, show_cell=draw_events, ov=True)
-
             for ax, session in zip(axes, sessions):
                 if not draw_events:  
                     ax.scatter(recording_dict[session]['tracking']['x_pos'],
                                recording_dict[session]['tracking']['y_pos'],
                                 s=[path_dot_size if not draw_speed else \
                                     (recording_dict[session]['tracking']['speed']/np.percentile(recording_dict[session]['tracking']['speed'],95))/speed_scaler],
-                                c=[[[.2,.2,.2]] if not draw_hd else make_circular_colormap(recording_dict[session]['tracking']['head_angle'], cmap=cmap)][0],
+                                c=[[path_color] if not draw_hd else make_circular_colormap(recording_dict[session]['tracking']['head_angle'], cmap=cmap)][0],
                                 lw=0,
                                 alpha=alpha_path)
                 else:
                     ax.scatter(recording_dict[session]['tracking']['x_pos'], 
                                recording_dict[session]['tracking']['y_pos'],
                                 s=[path_dot_size if not draw_speed else (recording_dict[session]['tracking']['speed']/np.percentile(recording_dict[session]['tracking']['speed'],95))/speed_scaler],
-                                c=[[.75,.75,.75]],
+                                c=[path_event_color if not draw_hd else path_event_hd_color][0],
                                 lw=0,
                                 alpha=alpha_path)
 
@@ -1545,7 +1634,7 @@ class dj_plotter():
             hash_or_animal = kwargs.get('hash_or_animal', 'animal')
             color_mapping  = kwargs.get('color_mapping', None)
             draw_image     = kwargs.get('draw_image', False)
-            image_key      = kwargs.get('image_key', 'max_img')
+            image_key      = kwargs.get('image_key', 'max_image')
             percentile     = kwargs.get('percentile', None)
             draw_centers   = kwargs.get('draw_centers', True)
             draw_numbers   = kwargs.get('draw_numbers', False)
@@ -1589,13 +1678,13 @@ class dj_plotter():
             if __iscorr(): 
                 ATTR_ROIS = self.ATTR_ROIS_CORR.copy()
                 image_key = [image_key + '_corr' if '_corr' not in image_key else image_key][0]
-                CENTER_X = 'center_x_corr'
-                CENTER_Y = 'center_y_corr'
-                PIXELS_X = 'xpix_corr'
-                PIXELS_Y = 'ypix_corr'
-                XLIM = 'x_range_microns_eff'
-                YLIM = 'y_range_microns_eff'
-                LAMBDA = 'lambda_corr'
+                CENTER_X  = 'center_x_corr'
+                CENTER_Y  = 'center_y_corr'
+                PIXELS_X  = 'xpix_corr'
+                PIXELS_Y  = 'ypix_corr'
+                XLIM      = 'x_range_microns_eff'
+                YLIM      = 'y_range_microns_eff'
+                LAMBDA    = 'lambda_corr'
 
             else:
                 ATTR_ROIS = self.ATTR_ROIS.copy()
@@ -1604,9 +1693,9 @@ class dj_plotter():
                 CENTER_Y = 'center_y'
                 PIXELS_X = 'xpix'
                 PIXELS_Y = 'ypix'
-                XLIM = 'x_range'
-                YLIM = 'y_range'
-                LAMBDA = 'lambda'
+                XLIM     = 'x_range'
+                YLIM     = 'y_range'
+                LAMBDA   = 'lambda'
 
 
             # Display session hash or animal_name/timestamp? 
@@ -1665,7 +1754,7 @@ class dj_plotter():
             tqdm_iterator = self.__tqdm_iterator(iterator.proj(), len(iterator), 'Drawing ROIs')
             # Before looping, pre-fetch large results:  CENTER_X, CENTER_Y, PIXELS_X, PIXELS_Y etc
             pixel_data = pd.DataFrame(self.dj_object.fetch('KEY', *ATTR_ROIS, as_dict=True))
-            pixel_data.set_index('cell_id',inplace=True)
+            pixel_data.set_index('cell_id', inplace=True)
             
             if ax is not None:
                 external_axis = True 
