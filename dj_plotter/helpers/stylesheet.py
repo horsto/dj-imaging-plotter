@@ -6,9 +6,11 @@
 
 CUE_CARD_COLOR_TM = 'white' # Cue card line color in tuning map
 
+# AXES TUNING MAPS AND AUTOCORRELATION
 AXES_COLOR_TM     = 'black' # Axes color in tuning map (axes_color_tuningmap)
 AXES_COLOR_ACORR  = 'black' # Axes color in 2D autocorr (axes_color_autocorr)
 
+# POLAR PLOTS
 COLOR_LINE_HD = 'black'
 COLOR_LINE_HD_OCC = '#444'
 
@@ -16,6 +18,12 @@ PATH = '#333'
 PATH_EVENT = '#666'
 PATH_EVENT_HD = '#888'
 EVENT = '#000'
+
+# ROIS 
+ROI_TEXT_COLOR = '#000'
+ROI_DOT_COLOR = '#000'
+
+
 
 styles = {
     'default': {
@@ -28,7 +36,8 @@ styles = {
         'path_event_color'        : '#777',
         'path_event_hd_color'     : '#999',
         'event_color'             : '#000',
-
+        'roi_text_color'          : '#000',
+        'roi_dot_color'           : '#000',
                },
 
     'dark_background' : {
@@ -41,15 +50,9 @@ styles = {
         'path_event_color'        : '#777',
         'path_event_hd_color'     : '#666',
         'event_color'             : '#fff',
-
+        'roi_text_color'          : '#fff',
+        'roi_dot_color'           : '#fff',
                },
-
-
-
-
-
-
-
 
 
 

@@ -1640,9 +1640,9 @@ class dj_plotter():
             draw_numbers   = kwargs.get('draw_numbers', False)
             draw_pixels    = kwargs.get('draw_pixels', False)
             draw_outlines  = kwargs.get('draw_outlines', False) 
-            text_color     = kwargs.get('text_color', 'k')
+            text_color     = kwargs.get('text_color', ROI_TEXT_COLOR)
             fontsize       = kwargs.get('fontsize', 15.)
-            dot_color      = kwargs.get('dot_color', 'k')
+            dot_color      = kwargs.get('dot_color', ROI_DOT_COLOR)
             dot_size       = kwargs.get('dot_size', 5)
             alpha          = kwargs.get('alpha', .8)
             colors         = kwargs.get('colors', None)
@@ -1738,8 +1738,8 @@ class dj_plotter():
                 # (take whole session as basis, no matter what)
                 # or random (over 'cell_ids')
                 if color_mapping is not None: 
-                    colors = make_linear_colormap(iterator.fetch(color_mapping),\
-                                 reference_numbers=self.dj_object.fetch(color_mapping),\
+                    colors = make_linear_colormap(iterator.fetch(color_mapping),
+                                 reference_numbers=self.dj_object.fetch(color_mapping),
                                  cmap=cmap)
                 else:
                     # "random"
@@ -1760,6 +1760,12 @@ class dj_plotter():
                 external_axis = True 
             elif ax is None:
                 external_axis = False
+
+            # Check for custom styling 
+            # These overwrite the keyword arguments for this function 
+            if self.style in styles: 
+                text_color   = styles[self.style].get('roi_text_color', text_color)
+                dot_color    = styles[self.style].get('roi_dot_color', dot_color)
 
             # Figure
             if not external_axis:
