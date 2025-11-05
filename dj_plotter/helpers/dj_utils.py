@@ -38,11 +38,12 @@ def make_multi_recording_object_dict(key):
     # Careful, ArenaObjectPos must be fully populated, all objects must be registered
     recording_dict = (Recording.RecordingType * \
                     ArenaObjectPos & \
-                    'recording_name = "{}"'.format(key['recording_name'])).fetch('KEY', order_by='recording_order ASC')
+                    'session_name = "{}"'.format(key['session_name'])).fetch('KEY', order_by='recording_order ASC')
     
     if len(recording_dict) > 2:
         raise NotImplementedError(f'{len(recording_dict)} object sessions / objects found, but > 2 not supported')
-    
+    if len(recording_dict) < 2:
+        raise NotImplementedError(f'Only one recording found. OV cell calculations need >1.')
     # Loop over sessions / objects and extract session dictionaries
     sessions = {}
     for sess in recording_dict:
@@ -54,7 +55,7 @@ def make_multi_recording_object_dict(key):
     # Add base session
     sessions['base'] = (Recording.RecordingType & \
                         'recording_name = "{}"'.format(key['recording_name']) & \
-                        'sessiontype = "Open Field"').fetch1('KEY')
+                        'recording_type = "Open Field"').fetch1('KEY')
         
     return sessions
 
