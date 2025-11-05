@@ -58,7 +58,7 @@ def make_circular_colormap(array, cmap=sns.husl_palette(as_cmap=True), n_colors=
 
     colors = []
     for no, el in enumerate(array):
-        index = np.int(np.interp(el, [0.,2*np.pi], [0.,1.]) * len(color_palette))
+        index = int(np.interp(el, [0.,2*np.pi], [0.,1.]) * len(color_palette))
         color = color_palette[index]
         if saturations is not None:
             color = tuple(np.array(color) * saturations[no])
@@ -114,9 +114,9 @@ def make_linear_colormap(array, cmap='magma', desat=1, reference_numbers=None, c
         colors = []
         for el in array:
             if reference_array is None:
-                index = np.int(np.interp(el,[np.min(array), np.percentile(array, percentile)],[0.,1.])*len(color_palette))
+                index = int(np.interp(el,[np.min(array), np.percentile(array, percentile)],[0.,1.])*len(color_palette))
             else:
-                index = np.int((el/np.percentile(reference_array, percentile))*len(color_palette))
+                index = int((el/np.percentile(reference_array, percentile))*len(color_palette))
                 
             if index > len(color_palette)-1: index = -1
             color = color_palette[index]
