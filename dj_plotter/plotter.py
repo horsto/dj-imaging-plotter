@@ -14,6 +14,7 @@ import cmasher as cmr
 
 # ... for ROI processing
 from scipy.ndimage.morphology import distance_transform_edt
+from scipy.ndimage import gaussian_filter1d
 from skimage.filters import gaussian
 
 # Helpers
@@ -26,7 +27,6 @@ from .helpers.stylesheet import *
 
 # Additional matplotlib options
 import matplotlib as mpl
-mpl.rcParams['pdf.fonttype'] = 42 # Fix bug in PDF export
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 # Load base schema
 import datajoint as dj 
@@ -113,7 +113,8 @@ class dj_plotter():
         self.style = kwargs.get('style', 'default')
         if self.style != 'default':
             assert self.style in plt.style.available, f'Plotting style "{self.style}" does not exist.\nPossible options:\n{plt.style.available}'
-
+            
+        self.custom_suffix = kwargs.get('custom_suffix', None)
     def __repr__(self):
         return f'DJ plotter class\nAvailable attributes:\n{self.__attributes}'
 
@@ -148,29 +149,29 @@ class dj_plotter():
     @property
     def __create_figure_single(self):
         ''' Create standard figure''' 
-        sns.set(font_scale=self.font_scale)
-        plt.style.use(self.style)
+        sns.set_theme(style='white', font_scale=1)
+        mpl.rcParams['pdf.fonttype'] = 42 # Fix bug in PDF export
         return plt.figure(figsize=(10,10))
 
     @property
     def __create_figure_grid(self):
         ''' Create standard figure for grid display of subplots ''' 
-        sns.set(font_scale=self.font_scale)
-        plt.style.use(self.style)
+        sns.set_theme(style='white', font_scale=1)
+        mpl.rcParams['pdf.fonttype'] = 42 # Fix bug in PDF export
         return plt.figure(figsize=(20,20))
     
     @property
     def __create_figure_grid_ov_2(self):
         ''' Create standard (object vector) figure for grid display of 2 subplots ''' 
-        sns.set(font_scale=self.font_scale)
-        plt.style.use(self.style)
+        sns.set_theme(style='white',font_scale=1)
+        mpl.rcParams['pdf.fonttype'] = 42 # Fix bug in PDF export
         return plt.figure(figsize=(6,3))
     
     @property
     def __create_figure_grid_ov_3(self):
         ''' Create standard (object vector) figure for grid display of 3 subplots ''' 
-        sns.set(font_scale=self.font_scale)
-        plt.style.use(self.style)
+        sns.set_theme(style='white',font_scale=1)
+        mpl.rcParams['pdf.fonttype'] = 42 # Fix bug in PDF export
         return plt.figure(figsize=(9,3))
 
     def __title(self, entry, display_score, hash_or_animal, show_cell=True, ov=False):
@@ -183,7 +184,7 @@ class dj_plotter():
                 hash_or_animal_string = entry[self.RECORDING_HASH_OV]
         elif hash_or_animal == 'animal':
             ts = datetime.strftime(entry[self.TIMESTAMP],'| %d.%m.%Y | %H:%M')
-            hash_or_animal_string = f'{entry[self.ANIMAL_NAME]} {ts}'    
+            hash_or_animal_string = f'{entry[self.ANIMAL_NAME]}'    
 
         if show_cell:
             if display_score is not None:
@@ -317,10 +318,10 @@ class dj_plotter():
                         print('Saving figure under {}'.format(str(self.save_path)))
                         if plot_counter < 2:
                             # Show the actual cell ids in export path 
-                            export_name = f'tuningmaps {key["recording_name"]} cell {key["cell_id"]}.{self.save_format}'
+                            export_name = f'tuningmaps {key["recording_name"]} cell {key["cell_id"]}{self.custom_suffix}.{self.save_format}'
                         else:
-                            export_name = f'tuningmaps n={plot_counter}.{self.save_format}'
-                        figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+                            export_name = f'tuningmaps n={plot_counter}{self.custom_suffix}.{self.save_format}'
+                        figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight', facecolor='white', edgecolor='white')
                     else:
                         plt.show()
 
@@ -384,10 +385,10 @@ class dj_plotter():
                     print('Saving figure under {}'.format(str(self.save_path)))
                     if plot_counter < 2:
                         # Show the actual cell ids in export path 
-                        export_name = f'tuningmaps {key["recording_name"]} cell {key["cell_id"]}.{self.save_format}'
+                        export_name = f'tuningmaps {key["recording_name"]} cell {key["cell_id"]}{self.custom_suffix}.{self.save_format}'
                     else:
-                        export_name = f'tuningmaps n={plot_counter}.{self.save_format}'
-                    figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+                        export_name = f'tuningmaps n={plot_counter}{self.custom_suffix}.{self.save_format}'
+                    figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight', facecolor='white', edgecolor='white')
                 else: 
                     plt.show()
 
@@ -500,10 +501,10 @@ class dj_plotter():
                         print('Saving figure under {}'.format(str(self.save_path)))
                         if plot_counter < 2:
                             # Show the actual cell ids in export path 
-                            export_name = f'autocorr {key["recording_name"]} cell {key["cell_id"]}.{self.save_format}'
+                            export_name = f'autocorr {key["recording_name"]} cell {key["cell_id"]}{self.custom_suffix}.{self.save_format}'
                         else:
-                            export_name = f'autocorr n={plot_counter}.{self.save_format}'
-                        figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+                            export_name = f'autocorr n={plot_counter}{self.custom_suffix}.{self.save_format}'
+                        figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight', facecolor='white', edgecolor='white')
                     else:
                         plt.show()
 
@@ -545,10 +546,10 @@ class dj_plotter():
                     print('Saving figure under {}'.format(str(self.save_path)))
                     if plot_counter < 2:
                         # Show the actual cell ids in export path 
-                        export_name = f'autocorr {key["recording_name"]} cell {key["cell_id"]}.{self.save_format}'
+                        export_name = f'autocorr {key["recording_name"]} cell {key["cell_id"]}{self.custom_suffix}.{self.save_format}'
                     else:
-                        export_name = f'autocorr n={plot_counter}.{self.save_format}'
-                    figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+                        export_name = f'autocorr n={plot_counter}{self.custom_suffix}.{self.save_format}'
+                    figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight', facecolor='white', edgecolor='white')
                 else: 
                     plt.show()
 
@@ -670,10 +671,10 @@ class dj_plotter():
                         print('Saving figure under {}'.format(str(self.save_path)))
                         if plot_counter < 2:
                             # Show the actual cell ids in export path 
-                            export_name = f'hdtuning {key["recording_name"]} cell {key["cell_id"]}.{self.save_format}'
+                            export_name = f'hdtuning {key["recording_name"]} cell {key["cell_id"]}{self.custom_suffix}.{self.save_format}'
                         else:
-                            export_name = f'hdtuning n={plot_counter}.{self.save_format}'
-                        figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+                            export_name = f'hdtuning n={plot_counter}{self.custom_suffix}.{self.save_format}'
+                        figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight', facecolor='white', edgecolor='white')
                     else:
                         plt.show()
 
@@ -715,8 +716,9 @@ class dj_plotter():
                     color=color_line_hd_occ, 
                     alpha=[1. if only_occupancy else .4][0], 
                     lw=line_width_)
+            smoothed = smoothed = circular_smooth(entry['angular_tuning']/np.nanmax(entry['angular_tuning']), 2.5)
             ax.plot(entry['angle_centers'], 
-                    entry['angular_tuning']/np.nanmax(entry['angular_tuning']), 
+                    smoothed,
                     color=color_line_hd, 
                     lw=line_width_, 
                     alpha=.85)
@@ -728,7 +730,7 @@ class dj_plotter():
             ax.set_theta_zero_location("S")
             ax.get_yaxis().set_ticks([])  
             ax.tick_params(labelbottom=False)      
-            ax.spines['polar'].set_visible(False)
+            ax.spines['polar'].set_visible(True)
 
             if display_title:          
                 # Get subplot title
@@ -740,10 +742,10 @@ class dj_plotter():
                     print('Saving figure under {}'.format(str(self.save_path)))
                     if plot_counter < 2:
                         # Show the actual cell ids in export path 
-                        export_name = f'hdtuning {key["recording_name"]} cell {key["cell_id"]}.{self.save_format}'
+                        export_name = f'hdtuning {key["recording_name"]} cell {key["cell_id"]}{self.custom_suffix}.{self.save_format}'
                     else:
-                        export_name = f'hdtuning n={plot_counter}.{self.save_format}'
-                    figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+                        export_name = f'hdtuning n={plot_counter}{self.custom_suffix}.{self.save_format}'
+                    figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight', facecolor='white', edgecolor='white')
                 else: 
                     plt.show()
 
@@ -1016,7 +1018,7 @@ class dj_plotter():
 
             if self.save_path is not None: 
                 print('Saving figure under {}'.format(str(self.save_path)))
-                export_name = f'tuningmaps ov {key["base_session"]} cell {key["cell_id"]}.{self.save_format}'
+                export_name = f'tuningmaps ov {key["session_name"]} cell {key["cell_id"]}{self.custom_suffix}.{self.save_format}'
                 figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
             else:
                 plt.show()
@@ -1232,10 +1234,10 @@ class dj_plotter():
                         print('Saving figure under {}'.format(str(self.save_path)))
                         if plot_counter < 2:
                             # Show the actual cell ids in export path 
-                            export_name = f'pathevent {key["recording_name"]} cell {key["cell_id"]}.{self.save_format}'
+                            export_name = f'pathevent {key["recording_name"]} cell {key["cell_id"]}{self.custom_suffix}.{self.save_format}'
                         else:
-                            export_name = f'pathevent n={plot_counter}.{self.save_format}'
-                        figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+                            export_name = f'pathevent n={plot_counter}{self.custom_suffix}.{self.save_format}'
+                        figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight', facecolor='white', edgecolor='white')
                 else:
                     plt.show()
 
@@ -1321,15 +1323,15 @@ class dj_plotter():
                     if plot_counter < 2:
                         # Show the actual cell ids in export path 
                         if not draw_events:
-                            export_name = f'path {key["recording_name"]}.{self.save_format}'
+                            export_name = f'path {key["recording_name"]}{self.custom_suffix}.{self.save_format}'
                         else: 
-                            export_name = f'pathevent {key["recording_name"]} cell {key["cell_id"]}.{self.save_format}'
+                            export_name = f'pathevent {key["recording_name"]} cell {key["cell_id"]}{self.custom_suffix}.{self.save_format}'
                     else:
                         if not draw_events:
-                            export_name = f'path n={plot_counter}.{self.save_format}'
+                            export_name = f'path n={plot_counter}{self.custom_suffix}.{self.save_format}'
                         else: 
-                            export_name = f'pathevent n={plot_counter}.{self.save_format}'
-                    figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+                            export_name = f'pathevent n={plot_counter}{self.custom_suffix}.{self.save_format}'
+                    figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight', facecolor='white', edgecolor='white')
                 else: 
                     plt.show()
 
@@ -1544,8 +1546,8 @@ class dj_plotter():
             plt.tight_layout()    
             if self.save_path is not None: 
                 print('Saving figure under {}'.format(str(self.save_path)))
-                export_name = f'pathevent ov {key["base_session"]} cell {key["cell_id"]}.{self.save_format}'
-                figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight')
+                export_name = f'pathevent ov {key["base_session"]} cell {key["cell_id"]}{self.custom_suffix}.{self.save_format}'
+                figure.savefig(self.save_path / export_name, dpi=300, bbox_inches='tight', facecolor='white', edgecolor='white')
             else:
                 plt.show()   
             
@@ -1847,7 +1849,9 @@ class dj_plotter():
 
             if (self.save_path is not None) and not external_axis: 
                 print('Saving figure under {}'.format(str(self.save_path)))
-                figure.savefig(self.save_path / f'rois {title.split("|")[0]}{path_suffix}.{self.save_format}', dpi=300, bbox_inches='tight')
+                figure.savefig(self.save_path / f'rois {title.split("|")[0]}{path_suffix}{self.custom_suffix}.{self.save_format}', 
+                               dpi=300, bbox_inches='tight',
+                               facecolor='white', edgecolor='white')
 
             if return_axes:
                 return ax
@@ -1869,19 +1873,19 @@ def _get_ovc_tuningmaps(recording_dict, key):
     '''
     fill_value = 0 # or np.nan
     
-    for key_ in ['dataset_name', 'recording_order','signal_dataset','tracking_dataset']:
+    for key_ in ['dataset_name', 'recording_name', 'recording_order','signal_dataset','tracking_dataset']:
         try:
             _ = key.pop(key_)
         except KeyError:
             pass
-        
-    rm, mask = (Ratemap & recording_dict['base'] & key).fetch1('tuningmap','mask_tm')
+
+    rm, mask = (TuningMap & recording_dict['base'] & key).fetch1('tuningmap','mask_tm')
     tuningmap = np.ma.array(rm, mask=mask).filled(fill_value=fill_value)
     recording_dict['base']['tuningmap'] = tuningmap 
     
     for session in ['object1', 'object2']:
         # Get fields and object position (in tuningmap coordinates)
-        rm, mask = (Ratemap & recording_dict[session] & key).fetch1('tuningmap','mask_tm')
+        rm, mask = (TuningMap & recording_dict[session] & key).fetch1('tuningmap','mask_tm')
         tuningmap = np.ma.array(rm, mask=mask).filled(fill_value=fill_value)
         
         # Take care of objects / positions 
@@ -1900,8 +1904,8 @@ def _get_ovc_tuningmaps(recording_dict, key):
         bin_size_rm_x = np.mean(np.diff(x_edges))
         bin_size_rm_y = np.mean(np.diff(y_edges))
 
-        obj_x_rm = ((obj_x - x_edges[0]) / bin_size_rm_x) - .5
-        obj_y_rm = ((obj_y - y_edges[0]) / bin_size_rm_y) - .5
+        obj_x_rm = ((float(obj_x) - x_edges[0]) / bin_size_rm_x) - .5
+        obj_y_rm = ((float(obj_y) - y_edges[0]) / bin_size_rm_y) - .5
 
         recording_dict[session]['tuningmap']     = tuningmap 
         recording_dict[session]['object_x']    = obj_x
@@ -1965,7 +1969,7 @@ def draw_vector_map(masked_histogram, radial_bins_hist, angular_bins_hist):
     angular_bins_hist : list (list(physt.special_histograms.polar_histogram.binnigs))  
     
     '''
-    sns.set(style='white', font_scale=1.5)
+    sns.set_style(style='white', font_scale=1.5)
     figure = plt.figure(figsize=(6,6))
     ax = figure.add_subplot(111)
     ax.imshow(masked_histogram.T,aspect='auto')
@@ -1986,3 +1990,13 @@ def draw_vector_map(masked_histogram, radial_bins_hist, angular_bins_hist):
     ax.set_xlabel('Distance [mm]')
     ax.set_ylabel('Angle [degrees]')
     plt.show()
+    
+def circular_smooth(arr, sigma):
+    # Stack the array 3 times
+    arr_long = np.concatenate([arr, arr, arr])
+    # Smooth the long array
+    arr_long_smooth = gaussian_filter1d(arr_long, sigma=sigma, mode='wrap')
+    # Extract the center part (original length)
+    n = len(arr)
+    arr_smooth = arr_long_smooth[n:2*n]
+    return arr_smooth
