@@ -36,7 +36,6 @@ setup(
         'scikit-image>=0.17.2',
         'pandas>=1.1.3',
         'cmasher>=1.5.7',
-        'datajoint>=0.12.7',
     ], 
 
     project_urls={  # Optional
